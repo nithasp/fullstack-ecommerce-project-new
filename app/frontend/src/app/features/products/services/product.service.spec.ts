@@ -19,7 +19,7 @@ describe('ProductService', () => {
       previewImg: [],
       types: [],
       reviews: [],
-      overallRating: 4.5
+      overallRating: 4.5,
     },
     {
       id: 2,
@@ -31,14 +31,14 @@ describe('ProductService', () => {
       previewImg: [],
       types: [],
       reviews: [],
-      overallRating: 5
-    }
+      overallRating: 5,
+    },
   ];
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [ProductService]
+      providers: [ProductService],
     });
     service = TestBed.inject(ProductService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -53,14 +53,14 @@ describe('ProductService', () => {
   });
 
   it('should fetch one page of products with the total from the backend API', () => {
-    service.getProducts({ limit: 12, offset: 0 }).subscribe(page => {
+    service.getProducts({ limit: 12, offset: 0 }).subscribe((page) => {
       expect(page.items.length).toBe(2);
       expect(page.items[0].name).toBe('Product 1');
       expect(page.items[1].id).toBe(2);
       expect(page.total).toBe(30);
     });
 
-    const req = httpMock.expectOne(r => r.url === API);
+    const req = httpMock.expectOne((r) => r.url === API);
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('limit')).toBe('12');
     expect(req.request.params.get('offset')).toBe('0');
@@ -72,7 +72,7 @@ describe('ProductService', () => {
   it('should send the category and search filters to the server', () => {
     service.getProducts({ limit: 12, offset: 24, category: 'Electronics', search: 'head' }).subscribe();
 
-    const req = httpMock.expectOne(r => r.url === API);
+    const req = httpMock.expectOne((r) => r.url === API);
     expect(req.request.params.get('offset')).toBe('24');
     expect(req.request.params.get('category')).toBe('Electronics');
     expect(req.request.params.get('search')).toBe('head');
@@ -80,7 +80,7 @@ describe('ProductService', () => {
   });
 
   it('should fetch every category', () => {
-    service.getCategories().subscribe(categories => {
+    service.getCategories().subscribe((categories) => {
       expect(categories).toEqual(['Electronics', 'Furniture']);
     });
 
@@ -90,7 +90,7 @@ describe('ProductService', () => {
   });
 
   it('should find a product by ID', () => {
-    service.getProductById('2').subscribe(product => {
+    service.getProductById('2').subscribe((product) => {
       expect(product).toBeTruthy();
       expect(product.name).toBe('Product 2');
       expect(product.price).toBe('199.99');

@@ -11,10 +11,7 @@ describe('NotificationService', () => {
 
     TestBed.configureTestingModule({
       imports: [ToastrModule.forRoot()],
-      providers: [
-        NotificationService,
-        { provide: ToastrService, useValue: toastrSpy }
-      ]
+      providers: [NotificationService, { provide: ToastrService, useValue: toastrSpy }],
     });
     service = TestBed.inject(NotificationService);
   });

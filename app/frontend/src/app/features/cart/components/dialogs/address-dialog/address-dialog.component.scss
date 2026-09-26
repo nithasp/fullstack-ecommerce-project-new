@@ -59,7 +59,9 @@
     align-items: center;
     transition: color $transition-fast;
 
-    &:hover { color: $color-text; }
+    &:hover {
+      color: $color-text;
+    }
   }
 
   &__close {
@@ -96,7 +98,9 @@
     color: $color-text-muted;
     font-size: $font-size-sm;
 
-    p { margin: 0; }
+    p {
+      margin: 0;
+    }
   }
 
   &__list {
@@ -173,7 +177,9 @@
     font-weight: $font-weight-medium;
     transition: background $transition-fast;
 
-    &:hover { background: $color-border; }
+    &:hover {
+      background: $color-border;
+    }
   }
 
   &__save {
@@ -181,7 +187,6 @@
     padding: $spacing-sm $spacing-xl;
     font-size: $font-size-base;
   }
-
 }
 
 .address-list-item {
@@ -192,10 +197,14 @@
   border: 2px solid $color-border;
   border-radius: $border-radius-md;
   cursor: pointer;
-  transition: border-color $transition-fast, background $transition-fast;
+  transition:
+    border-color $transition-fast,
+    background $transition-fast;
   user-select: none;
 
-  input[type='radio'] { display: none; }
+  input[type='radio'] {
+    display: none;
+  }
 
   &:hover {
     border-color: $color-primary-light;
@@ -266,7 +275,9 @@
     flex-shrink: 0;
     transition: color $transition-fast;
 
-    &:hover { color: $color-primary-dark; }
+    &:hover {
+      color: $color-primary-dark;
+    }
   }
 
   &__address,
@@ -278,7 +289,9 @@
     line-height: 1.4;
   }
 
-  &__city { margin-bottom: $spacing-sm; }
+  &__city {
+    margin-bottom: $spacing-sm;
+  }
 
   &__tags {
     display: flex;
@@ -318,7 +331,9 @@
     text-decoration: underline;
     transition: color $transition-fast;
 
-    &:hover { color: $color-error; }
+    &:hover {
+      color: $color-error;
+    }
   }
 }
 
@@ -357,8 +372,12 @@
     outline: none;
     transition: border-color $transition-fast;
 
-    &:focus { border-color: $color-primary; }
-    &::placeholder { color: $color-text-muted; }
+    &:focus {
+      border-color: $color-primary;
+    }
+    &::placeholder {
+      color: $color-text-muted;
+    }
   }
 }
 
@@ -410,22 +429,41 @@
 }
 
 @keyframes overlayFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes dialogSlideUp {
-  from { transform: translateY(24px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes overlayFadeOut {
-  from { opacity: 1; }
-  to   { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes dialogSlideDown {
-  from { transform: translateY(0);    opacity: 1; }
-  to   { transform: translateY(24px); opacity: 0; }
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(24px);
+    opacity: 0;
+  }
 }
-

@@ -6,10 +6,10 @@ import { ToastrModule } from 'ngx-toastr';
 import { of, throwError } from 'rxjs';
 import { ProductListComponent, PRODUCT_PAGE_SIZE, SEARCH_DEBOUNCE_MS } from './product-list.component';
 import { ProductCardComponent } from '../components/product-card/product-card.component';
-import { TruncatePipe } from '../../../shared/pipes/truncate.pipe';
+import { TruncatePipe } from '@shared/pipes/truncate.pipe';
 import { ProductService } from '../services/product.service';
-import { CartService } from '../../../core/services/cart/cart.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
+import { CartService } from '@core/services/cart/cart.service';
+import { NotificationService } from '@core/services/ui/notification.service';
 import { Product } from '../models/product.model';
 
 describe('ProductListComponent', () => {
@@ -30,7 +30,7 @@ describe('ProductListComponent', () => {
       types: [{ _id: 't1', productId: 1, color: 'Black', quantity: 10, price: 79.99, stock: 10, image: '' }],
       reviews: [],
       overallRating: 4.5,
-      stock: 10
+      stock: 10,
     },
     {
       id: 2,
@@ -43,8 +43,8 @@ describe('ProductListComponent', () => {
       types: [],
       reviews: [],
       overallRating: 5,
-      stock: 20
-    }
+      stock: 20,
+    },
   ];
 
   const lamp: Product = { ...mockProducts[1], id: 3, name: 'Desk Lamp', category: 'Lighting' };
@@ -57,18 +57,13 @@ describe('ProductListComponent', () => {
     notificationSpy = jasmine.createSpyObj('NotificationService', ['success', 'error', 'info', 'warning']);
 
     await TestBed.configureTestingModule({
-      imports: [
-        HttpClientTestingModule,
-        FormsModule,
-        RouterTestingModule,
-        ToastrModule.forRoot()
-      ],
+      imports: [HttpClientTestingModule, FormsModule, RouterTestingModule, ToastrModule.forRoot()],
       declarations: [ProductListComponent, ProductCardComponent, TruncatePipe],
       providers: [
         { provide: ProductService, useValue: productServiceSpy },
         { provide: NotificationService, useValue: notificationSpy },
-        CartService
-      ]
+        CartService,
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductListComponent);
@@ -82,7 +77,10 @@ describe('ProductListComponent', () => {
 
   it('should load the first page on init', () => {
     expect(productServiceSpy.getProducts).toHaveBeenCalledWith({
-      limit: PRODUCT_PAGE_SIZE, offset: 0, category: undefined, search: undefined
+      limit: PRODUCT_PAGE_SIZE,
+      offset: 0,
+      category: undefined,
+      search: undefined,
     });
     expect(component.products.length).toBe(2);
     expect(component.total).toBe(2);
@@ -100,7 +98,7 @@ describe('ProductListComponent', () => {
     component.filterByCategory('Electronics');
 
     expect(productServiceSpy.getProducts).toHaveBeenCalledWith(
-      jasmine.objectContaining({ category: 'Electronics', offset: 0 })
+      jasmine.objectContaining({ category: 'Electronics', offset: 0 }),
     );
     expect(component.products.length).toBe(1);
     expect(component.products[0].name).toBe('Headphones');
@@ -122,7 +120,7 @@ describe('ProductListComponent', () => {
 
     tick(1);
     expect(productServiceSpy.getProducts).toHaveBeenCalledOnceWith(
-      jasmine.objectContaining({ search: 'chair', offset: 0 })
+      jasmine.objectContaining({ search: 'chair', offset: 0 }),
     );
   }));
 
@@ -131,7 +129,7 @@ describe('ProductListComponent', () => {
     component.onSearchChange('head');
     tick(SEARCH_DEBOUNCE_MS);
     expect(productServiceSpy.getProducts.calls.mostRecent().args[0]).toEqual(
-      jasmine.objectContaining({ category: 'Electronics', search: 'head' })
+      jasmine.objectContaining({ category: 'Electronics', search: 'head' }),
     );
   }));
 
@@ -145,7 +143,7 @@ describe('ProductListComponent', () => {
     fixture.detectChanges();
 
     expect(productServiceSpy.getProducts.calls.mostRecent().args[0].offset).toBe(2);
-    expect(component.products.map(p => p.name)).toEqual(['Headphones', 'Office Chair', 'Desk Lamp']);
+    expect(component.products.map((p) => p.name)).toEqual(['Headphones', 'Office Chair', 'Desk Lamp']);
     expect(fixture.nativeElement.querySelector('.product-list__more-btn')).toBeNull();
   });
 

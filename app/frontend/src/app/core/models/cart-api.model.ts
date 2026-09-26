@@ -1,4 +1,4 @@
-import { ProductType } from '../../features/products/models/product.model';
+import { ProductType } from '@features/products/models/product.model';
 
 export interface CartApiItem {
   id: number;

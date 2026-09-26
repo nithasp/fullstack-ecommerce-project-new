@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
-import { ActivityLogComponent, ACTIVITY_PAGE_SIZE, USER_FILTER_DEBOUNCE_MS } from './activity-log.component';
+import { ActivityLogComponent, ACTIVITY_PAGE_SIZE } from './activity-log.component';
+import { USER_FILTER_DEBOUNCE_MS } from '../utils/admin-filters';
 import { HumanizePipe } from '../pipes/humanize.pipe';
 import { AuditLogApiService } from '../services/audit-log-api.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { NotificationService } from '@core/services/ui/notification.service';
+import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { AuditLog, AuditLogQuery } from '../models/audit-log.model';
 
 describe('ActivityLogComponent', () => {
@@ -35,10 +36,12 @@ describe('ActivityLogComponent', () => {
 
   beforeEach(async () => {
     apiSpy = jasmine.createSpyObj('AuditLogApiService', ['getAuditLogs']);
-    apiSpy.getAuditLogs.and.returnValue(of({
-      items: [entry(1), entry(2, { action: 'DELETE', event: 'address.deleted', statusCode: 403 })],
-      total: 60,
-    }));
+    apiSpy.getAuditLogs.and.returnValue(
+      of({
+        items: [entry(1), entry(2, { action: 'DELETE', event: 'address.deleted', statusCode: 403 })],
+        total: 60,
+      }),
+    );
     notificationSpy = jasmine.createSpyObj('NotificationService', ['success', 'error', 'info', 'warning']);
 
     await TestBed.configureTestingModule({
@@ -46,8 +49,8 @@ describe('ActivityLogComponent', () => {
       declarations: [ActivityLogComponent, HumanizePipe, LoadingSpinnerComponent],
       providers: [
         { provide: AuditLogApiService, useValue: apiSpy },
-        { provide: NotificationService, useValue: notificationSpy }
-      ]
+        { provide: NotificationService, useValue: notificationSpy },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ActivityLogComponent);
@@ -63,13 +66,13 @@ describe('ActivityLogComponent', () => {
   });
 
   it('should render one row per entry with who, the type, the event and the result', () => {
-    const rows = fixture.nativeElement.querySelectorAll('.activity-log__row');
+    const rows = fixture.nativeElement.querySelectorAll('.admin-log__row');
     expect(rows.length).toBe(2);
     expect(rows[0].textContent).toContain('#7');
     expect(rows[0].textContent).toContain('alice');
     expect(rows[0].textContent).toContain('Cart item added');
-    expect(rows[1].querySelector('.activity-log__badge--delete')).toBeTruthy();
-    expect(rows[1].querySelector('.activity-log__result--failed').textContent).toContain('403');
+    expect(rows[1].querySelector('.admin-log__badge--delete')).toBeTruthy();
+    expect(rows[1].querySelector('.admin-log__result--failed').textContent).toContain('403');
   });
 
   it('should ask for every type once reads are ticked', () => {
@@ -99,7 +102,7 @@ describe('ActivityLogComponent', () => {
   });
 
   it('should offer a link to the page views of the app', () => {
-    const tabs = fixture.nativeElement.querySelectorAll('.activity-log__tab');
+    const tabs = fixture.nativeElement.querySelectorAll('.admin-log__tab');
     expect(tabs.length).toBe(2);
     expect(tabs[1].textContent).toContain('Page views');
   });
@@ -141,10 +144,10 @@ describe('ActivityLogComponent', () => {
   });
 
   it('should show the details of an entry when its row is clicked', () => {
-    fixture.nativeElement.querySelector('.activity-log__row').click();
+    fixture.nativeElement.querySelector('.admin-log__row').click();
     fixture.detectChanges();
 
-    const details = fixture.nativeElement.querySelector('.activity-log__details');
+    const details = fixture.nativeElement.querySelector('.admin-log__details');
     expect(details.textContent).toContain('cart.item_added');
     expect(details.textContent).toContain('203.0.113.5');
     expect(details.textContent).toContain('productId');

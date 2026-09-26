@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthService } from './core/services/auth/auth.service';
-import { CartService } from './core/services/cart/cart.service';
-import { PageViewService } from './core/services/activity/page-view.service';
+import { AuthService } from '@core/services/auth/auth.service';
+import { CartService } from '@core/services/cart/cart.service';
+import { PageViewService } from '@core/services/activity/page-view.service';
 
 @Component({
   selector: 'app-root',
@@ -25,7 +25,7 @@ export class AppComponent implements OnInit {
 
     this.pageViewService.trackPageViews();
 
-    this.authService.isLoggedIn$.subscribe(isLoggedIn => {
+    this.authService.isLoggedIn$.subscribe((isLoggedIn) => {
       if (isLoggedIn) {
         this.cartService.fetchCart();
       } else {

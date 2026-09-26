@@ -1,5 +1,6 @@
 import {
   HttpContextToken,
+  HttpEvent,
   HttpErrorResponse,
   HttpHandlerFn,
   HttpInterceptorFn,
@@ -7,14 +8,7 @@ import {
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  BehaviorSubject,
-  catchError,
-  filter,
-  switchMap,
-  take,
-  throwError,
-} from 'rxjs';
+import { BehaviorSubject, Observable, catchError, filter, switchMap, take, throwError } from 'rxjs';
 
 import { AuthService } from '../services/auth/auth.service';
 import { NotificationService } from '../services/ui/notification.service';
@@ -36,10 +30,7 @@ function extractMessage(error: HttpErrorResponse): string {
   return error.error?.message || error.message || 'An unexpected error occurred.';
 }
 
-export const authInterceptor: HttpInterceptorFn = (
-  req: HttpRequest<unknown>,
-  next: HttpHandlerFn
-) => {
+export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const notification = inject(NotificationService);
@@ -49,8 +40,8 @@ export const authInterceptor: HttpInterceptorFn = (
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) =>
-      handleError(error, authReq, next, authService, router, notification)
-    )
+      handleError(error, authReq, next, authService, router, notification),
+    ),
   );
 };
 
@@ -60,8 +51,8 @@ function handleError(
   next: HttpHandlerFn,
   authService: AuthService,
   router: Router,
-  notification: NotificationService
-) {
+  notification: NotificationService,
+): Observable<HttpEvent<unknown>> {
   if (req.context.get(QUIET_ERRORS) && error.error?.code !== 'token_expired') {
     return throwError(() => new Error(extractMessage(error)));
   }
@@ -80,7 +71,7 @@ function handleError(
     }
     authService.clearSession();
     notification.error('Your session is invalid. Please log in again.');
-    router.navigate(['/auth/login']);
+    void router.navigate(['/auth/login']);
     return throwError(() => new Error(extractMessage(error)));
   }
 
@@ -107,8 +98,8 @@ function handle401Refresh(
   next: HttpHandlerFn,
   authService: AuthService,
   router: Router,
-  notification: NotificationService
-) {
+  notification: NotificationService,
+): Observable<HttpEvent<unknown>> {
   if (!isRefreshing) {
     isRefreshing = true;
     refreshTokenSubject.next(null);
@@ -124,15 +115,15 @@ function handle401Refresh(
         refreshTokenSubject.next(null);
         authService.clearSession();
         notification.error('Your session has expired. Please log in again.');
-        router.navigate(['/auth/login']);
+        void router.navigate(['/auth/login']);
         return throwError(() => err);
-      })
+      }),
     );
   }
 
   return refreshTokenSubject.pipe(
     filter((token): token is string => token !== null),
     take(1),
-    switchMap((token) => next(addToken(req, token)))
+    switchMap((token) => next(addToken(req, token))),
   );
 }

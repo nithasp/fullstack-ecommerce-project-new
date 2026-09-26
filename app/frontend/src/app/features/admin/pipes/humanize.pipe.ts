@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'humanize'
+  name: 'humanize',
 })
 export class HumanizePipe implements PipeTransform {
   transform(value: string | null | undefined): string {

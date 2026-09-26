@@ -5,11 +5,11 @@ import { ProductDetailComponent } from './product-detail/product-detail.componen
 
 const routes: Routes = [
   { path: '', component: ProductListComponent, data: { page: 'Products' } },
-  { path: ':id', component: ProductDetailComponent, data: { page: 'Product detail' } }
+  { path: ':id', component: ProductDetailComponent, data: { page: 'Product detail' } },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class ProductsRoutingModule { }
+export class ProductsRoutingModule {}

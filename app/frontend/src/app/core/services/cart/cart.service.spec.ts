@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CartService } from './cart.service';
-import { Product, ProductType } from '../../../features/products/models/product.model';
+import { Product, ProductType } from '@features/products/models/product.model';
 
 describe('CartService', () => {
   let service: CartService;
@@ -13,7 +13,7 @@ describe('CartService', () => {
     quantity: 50,
     price: 79.99,
     stock: 50,
-    image: 'https://example.com/img.jpg'
+    image: 'https://example.com/img.jpg',
   };
 
   const mockProduct: Product = {
@@ -26,19 +26,19 @@ describe('CartService', () => {
     previewImg: ['https://example.com/img.jpg'],
     types: [mockType],
     reviews: [],
-    overallRating: 4.5
+    overallRating: 4.5,
   };
 
   const mockProduct2: Product = {
     ...mockProduct,
     id: 2,
     name: 'Test Product 2',
-    price: '49.99'
+    price: '49.99',
   };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule]
+      imports: [HttpClientTestingModule],
     });
     service = TestBed.inject(CartService);
   });
@@ -125,7 +125,7 @@ describe('CartService', () => {
 
   it('should emit cart changes via observable', (done) => {
     let emitCount = 0;
-    service.cart$.subscribe(items => {
+    service.cart$.subscribe((items) => {
       emitCount++;
       if (emitCount === 2) {
         expect(items.length).toBe(1);

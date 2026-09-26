@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
-import { CartItem, Product, ProductType, Review } from '../../../features/products/models/product.model';
+import { CartItem, Product, ProductType, Review } from '@features/products/models/product.model';
 import { CartApiService } from './cart-api.service';
 import { CartApiItem } from '../../models/cart-api.model';
 import { QuantityUpdate } from '../../models/cart.model';
@@ -28,11 +28,11 @@ export class CartService {
         switchMap(({ cartItemId, quantity, itemKey }) => {
           this.setLoading(itemKey, true);
           return this.cartApi.updateItem(cartItemId, quantity);
-        })
+        }),
       )
       .subscribe({
         next: (updated) => {
-          const item = this.cartItems.find(i => i.cartItemId === updated.id);
+          const item = this.cartItems.find((i) => i.cartItemId === updated.id);
           if (item) {
             item.quantity = updated.quantity;
             this.cartSubject.next([...this.cartItems]);
@@ -56,7 +56,7 @@ export class CartService {
   }
 
   private clearLoadingByCartItemId(cartItemId: number): void {
-    const item = this.cartItems.find(i => i.cartItemId === cartItemId);
+    const item = this.cartItems.find((i) => i.cartItemId === cartItemId);
     if (item) {
       this.setLoading(this.makeKey(item.product.id, item.selectedType?._id), false);
     }
@@ -74,7 +74,7 @@ export class CartService {
     this.cartLoadingSubject.next(true);
     this.cartApi.getCart().subscribe({
       next: (apiItems) => {
-        this.cartItems = apiItems.map(api => this.apiItemToCartItem(api));
+        this.cartItems = apiItems.map((api) => this.apiItemToCartItem(api));
         this.cartSubject.next([...this.cartItems]);
         this.cartLoadingSubject.next(false);
       },
@@ -122,8 +122,7 @@ export class CartService {
 
   addToCartLocal(product: Product, quantity: number, selectedType?: ProductType): void {
     const existingIndex = this.cartItems.findIndex(
-      item => item.product.id === product.id &&
-              item.selectedType?._id === selectedType?._id
+      (item) => item.product.id === product.id && item.selectedType?._id === selectedType?._id,
     );
     if (existingIndex > -1) {
       this.cartItems[existingIndex].quantity += quantity;
@@ -142,8 +141,7 @@ export class CartService {
   syncToBackend(product: Product, selectedType?: ProductType): void {
     const key = this.makeKey(product.id, selectedType?._id);
     const item = this.cartItems.find(
-      i => i.product.id === product.id &&
-           i.selectedType?._id === selectedType?._id
+      (i) => i.product.id === product.id && i.selectedType?._id === selectedType?._id,
     );
     if (!item) return;
 
@@ -159,34 +157,34 @@ export class CartService {
         error: () => this.setLoading(key, false),
       });
     } else {
-      this.cartApi.addItem({
-        productId: product.id,
-        quantity: item.quantity,
-        typeId: selectedType?._id ?? null,
-      }).subscribe({
-        next: (apiItem) => {
-          item.cartItemId = apiItem.id;
-          item.quantity = apiItem.quantity;
-          this.cartSubject.next([...this.cartItems]);
-          this.setLoading(key, false);
-        },
-        error: () => {
-          this.cartItems = this.cartItems.filter(
-            i => !(i.product.id === product.id &&
-                   i.selectedType?._id === selectedType?._id)
-          );
-          this.cartSubject.next([...this.cartItems]);
-          this.setLoading(key, false);
-        },
-      });
+      this.cartApi
+        .addItem({
+          productId: product.id,
+          quantity: item.quantity,
+          typeId: selectedType?._id ?? null,
+        })
+        .subscribe({
+          next: (apiItem) => {
+            item.cartItemId = apiItem.id;
+            item.quantity = apiItem.quantity;
+            this.cartSubject.next([...this.cartItems]);
+            this.setLoading(key, false);
+          },
+          error: () => {
+            this.cartItems = this.cartItems.filter(
+              (i) => !(i.product.id === product.id && i.selectedType?._id === selectedType?._id),
+            );
+            this.cartSubject.next([...this.cartItems]);
+            this.setLoading(key, false);
+          },
+        });
     }
   }
 
   addToCart(product: Product, quantity: number, selectedType?: ProductType): void {
     const key = this.makeKey(product.id, selectedType?._id);
     const existingIndex = this.cartItems.findIndex(
-      item => item.product.id === product.id &&
-              item.selectedType?._id === selectedType?._id
+      (item) => item.product.id === product.id && item.selectedType?._id === selectedType?._id,
     );
 
     if (existingIndex > -1) {
@@ -203,43 +201,41 @@ export class CartService {
     this.cartSubject.next([...this.cartItems]);
 
     this.setLoading(key, true);
-    this.cartApi.addItem({
-      productId: product.id,
-      quantity,
-      typeId: selectedType?._id ?? null,
-    }).subscribe({
-      next: (apiItem) => {
-        const item = this.cartItems.find(
-          i => i.product.id === product.id &&
-               i.selectedType?._id === selectedType?._id
-        );
-        if (item) {
-          item.cartItemId = apiItem.id;
-          item.quantity = apiItem.quantity;
-          this.cartSubject.next([...this.cartItems]);
-        }
-        this.setLoading(key, false);
-      },
-      error: () => {
-        if (existingIndex > -1) {
-          this.cartItems[existingIndex].quantity -= quantity;
-        } else {
-          this.cartItems = this.cartItems.filter(
-            i => !(i.product.id === product.id &&
-                   i.selectedType?._id === selectedType?._id)
+    this.cartApi
+      .addItem({
+        productId: product.id,
+        quantity,
+        typeId: selectedType?._id ?? null,
+      })
+      .subscribe({
+        next: (apiItem) => {
+          const item = this.cartItems.find(
+            (i) => i.product.id === product.id && i.selectedType?._id === selectedType?._id,
           );
-        }
-        this.cartSubject.next([...this.cartItems]);
-        this.setLoading(key, false);
-      },
-    });
+          if (item) {
+            item.cartItemId = apiItem.id;
+            item.quantity = apiItem.quantity;
+            this.cartSubject.next([...this.cartItems]);
+          }
+          this.setLoading(key, false);
+        },
+        error: () => {
+          if (existingIndex > -1) {
+            this.cartItems[existingIndex].quantity -= quantity;
+          } else {
+            this.cartItems = this.cartItems.filter(
+              (i) => !(i.product.id === product.id && i.selectedType?._id === selectedType?._id),
+            );
+          }
+          this.cartSubject.next([...this.cartItems]);
+          this.setLoading(key, false);
+        },
+      });
   }
 
   removeFromCart(productId: number, typeId?: string): void {
     const key = this.makeKey(productId, typeId);
-    const item = this.cartItems.find(
-      i => i.product.id === productId && i.selectedType?._id === typeId
-    );
+    const item = this.cartItems.find((i) => i.product.id === productId && i.selectedType?._id === typeId);
     if (!item) return;
 
     this.setLoading(key, true);
@@ -248,7 +244,7 @@ export class CartService {
       this.cartApi.removeItem(item.cartItemId).subscribe({
         next: () => {
           this.cartItems = this.cartItems.filter(
-            i => !(i.product.id === productId && i.selectedType?._id === typeId)
+            (i) => !(i.product.id === productId && i.selectedType?._id === typeId),
           );
           this.cartSubject.next([...this.cartItems]);
           this.setLoading(key, false);
@@ -257,7 +253,7 @@ export class CartService {
       });
     } else {
       this.cartItems = this.cartItems.filter(
-        i => !(i.product.id === productId && i.selectedType?._id === typeId)
+        (i) => !(i.product.id === productId && i.selectedType?._id === typeId),
       );
       this.cartSubject.next([...this.cartItems]);
       this.setLoading(key, false);
@@ -266,9 +262,7 @@ export class CartService {
 
   updateQuantity(productId: number, quantity: number, typeId?: string): void {
     const key = this.makeKey(productId, typeId);
-    const item = this.cartItems.find(
-      i => i.product.id === productId && i.selectedType?._id === typeId
-    );
+    const item = this.cartItems.find((i) => i.product.id === productId && i.selectedType?._id === typeId);
     if (!item) return;
 
     item.quantity = Math.max(1, quantity);
@@ -291,7 +285,7 @@ export class CartService {
   getTotal(): number {
     return this.cartItems.reduce((total, item) => {
       const price = item.selectedType?.price ?? Number(item.product.price);
-      return total + (price * item.quantity);
+      return total + price * item.quantity;
     }, 0);
   }
 

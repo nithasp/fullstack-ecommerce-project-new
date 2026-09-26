@@ -2,24 +2,53 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CommonModule } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { BehaviorSubject, of } from 'rxjs';
 import { NavbarComponent } from './navbar.component';
-import { CartService } from '../../../core/services/cart/cart.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
-import { Product } from '../../../features/products/models/product.model';
+import { CartService } from '@core/services/cart/cart.service';
+import { AuthService } from '@core/services/auth/auth.service';
+import { NotificationService } from '@core/services/ui/notification.service';
+import { AuthUser } from '@core/models/auth.model';
+import { Product } from '@features/products/models/product.model';
+
+const admin: AuthUser = {
+  id: 1,
+  username: 'boss',
+  firstName: 'Big',
+  lastName: 'Boss',
+  role: 'admin',
+};
 
 describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
   let cartService: CartService;
 
+  // The component reads service state through the async pipe, so the tests move the services
+  let isLoggedIn$: BehaviorSubject<boolean>;
+  let currentUser$: BehaviorSubject<AuthUser | null>;
+
+  const query = (selector: string): HTMLElement | null => fixture.nativeElement.querySelector(selector);
+
   beforeEach(async () => {
+    isLoggedIn$ = new BehaviorSubject<boolean>(false);
+    currentUser$ = new BehaviorSubject<AuthUser | null>(null);
+
     await TestBed.configureTestingModule({
       imports: [RouterTestingModule, CommonModule, HttpClientTestingModule],
       declarations: [NavbarComponent],
       providers: [
         CartService,
-        { provide: NotificationService, useValue: { success: () => {} } }
-      ]
+        {
+          provide: AuthService,
+          useValue: {
+            isLoggedIn$,
+            currentUser$,
+            fetchCurrentUser: () => of(null),
+            logout: () => {},
+          },
+        },
+        { provide: NotificationService, useValue: { success: () => {} } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(NavbarComponent);
@@ -27,6 +56,12 @@ describe('NavbarComponent', () => {
     cartService = TestBed.inject(CartService);
     fixture.detectChanges();
   });
+
+  const signIn = (user: AuthUser | null = null): void => {
+    isLoggedIn$.next(true);
+    currentUser$.next(user);
+    fixture.detectChanges();
+  };
 
   it('should create', () => {
     expect(component).toBeTruthy();
@@ -37,49 +72,50 @@ describe('NavbarComponent', () => {
   });
 
   it('should render brand name in navbar', () => {
-    const brand = fixture.nativeElement.querySelector('.navbar__brand');
-    expect(brand.textContent).toContain('MyStore');
+    expect(query('.navbar__brand')?.textContent).toContain('MyStore');
+  });
+
+  it('should offer the auth links while signed out', () => {
+    expect(query('.navbar__auth-btn--login')).toBeTruthy();
+    expect(query('.navbar__cart-link')).toBeFalsy();
   });
 
   it('should render Products link when logged in', () => {
-    component.isLoggedIn = true;
-    fixture.detectChanges();
-    const links = fixture.nativeElement.querySelectorAll('.navbar__link');
-    const productsLink = Array.from(links).find(
-      (l: any) => l.textContent.includes('Products')
-    );
+    signIn();
+    const links = Array.from(fixture.nativeElement.querySelectorAll('.navbar__link'));
+    const productsLink = links.find((link) => (link as HTMLElement).textContent?.includes('Products'));
     expect(productsLink).toBeTruthy();
   });
 
   it('should render Cart link with icon when logged in', () => {
-    component.isLoggedIn = true;
-    fixture.detectChanges();
-    const cartLink = fixture.nativeElement.querySelector('.navbar__cart-link');
+    signIn();
+    const cartLink = query('.navbar__cart-link');
     expect(cartLink).toBeTruthy();
-    const icon = cartLink.querySelector('.navbar__cart-icon');
-    expect(icon).toBeTruthy();
+    expect(cartLink?.querySelector('.navbar__cart-icon')).toBeTruthy();
   });
 
   it('should show the Activity Log link to admins only', () => {
-    component.isLoggedIn = true;
-    component.currentUser = { id: 1, username: 'boss', firstName: 'Big', lastName: 'Boss', role: 'admin' };
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('a[href="/admin/activity"]')).toBeTruthy();
+    signIn(admin);
+    expect(query('a[href="/admin/activity"]')).toBeTruthy();
 
-    component.currentUser = { ...component.currentUser, role: 'customer' };
+    currentUser$.next({ ...admin, role: 'customer' });
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('a[href="/admin/activity"]')).toBeFalsy();
+    expect(query('a[href="/admin/activity"]')).toBeFalsy();
   });
 
-  it('should start with cart count 0', () => {
-    expect(component.cartCount).toBe(0);
+  it('should show the signed-in username', () => {
+    signIn(admin);
+    expect(query('.navbar__username')?.textContent).toContain('boss');
+  });
+
+  it('should fall back to a generic name when no profile has arrived', () => {
+    signIn(null);
+    expect(query('.navbar__username')?.textContent).toContain('User');
   });
 
   it('should not show badge when cart is empty', () => {
-    component.isLoggedIn = true;
-    fixture.detectChanges();
-    const badge = fixture.nativeElement.querySelector('.navbar__badge');
-    expect(badge).toBeFalsy();
+    signIn();
+    expect(query('.navbar__badge')).toBeFalsy();
   });
 
   it('should update cart count when items added', () => {
@@ -93,10 +129,32 @@ describe('NavbarComponent', () => {
       previewImg: [],
       types: [],
       reviews: [],
-      overallRating: 5
+      overallRating: 5,
     };
+
+    signIn();
     cartService.addToCartLocal(product, 3);
-    expect(component.cartCount).toBe(3);
+    fixture.detectChanges();
+
+    expect(query('.navbar__badge')?.textContent).toContain('3');
+  });
+
+  it('should fetch a fresh profile when a session begins', () => {
+    const authService = TestBed.inject(AuthService);
+    spyOn(authService, 'fetchCurrentUser').and.returnValue(of(null as unknown as AuthUser));
+
+    isLoggedIn$.next(true);
+
+    expect(authService.fetchCurrentUser).toHaveBeenCalled();
+  });
+
+  it('should close the user menu when the session ends', () => {
+    signIn(admin);
+    component.toggleUserMenu();
+    expect(component.userMenuOpen).toBeTrue();
+
+    isLoggedIn$.next(false);
+    expect(component.userMenuOpen).toBeFalse();
   });
 
   it('should open mobile menu on first toggle', () => {

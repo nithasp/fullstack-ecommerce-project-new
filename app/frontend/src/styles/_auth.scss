@@ -68,7 +68,9 @@
       text-decoration: none;
       transition: color $transition-fast;
 
-      &:hover { color: $color-primary-dark; }
+      &:hover {
+        color: $color-primary-dark;
+      }
     }
   }
 }

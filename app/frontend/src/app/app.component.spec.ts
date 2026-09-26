@@ -3,8 +3,8 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ToastrModule } from 'ngx-toastr';
 import { AppComponent } from './app.component';
-import { SharedModule } from './shared/shared.module';
-import { PageViewService } from './core/services/activity/page-view.service';
+import { SharedModule } from '@shared/shared.module';
+import { PageViewService } from '@core/services/activity/page-view.service';
 
 describe('AppComponent', () => {
   let component: AppComponent;
@@ -14,7 +14,7 @@ describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [RouterTestingModule, HttpClientTestingModule, ToastrModule.forRoot(), SharedModule],
-      declarations: [AppComponent]
+      declarations: [AppComponent],
     }).compileComponents();
 
     trackPageViewsSpy = spyOn(TestBed.inject(PageViewService), 'trackPageViews').and.callThrough();

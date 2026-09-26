@@ -39,12 +39,12 @@ describe('AuditLogApiService', () => {
   });
 
   it('should fetch one page of entries with the total, sending only the paging when no filter is set', () => {
-    service.getAuditLogs({ limit: 25, offset: 0 }).subscribe(page => {
+    service.getAuditLogs({ limit: 25, offset: 0 }).subscribe((page) => {
       expect(page.items).toEqual([entry]);
       expect(page.total).toBe(40);
     });
 
-    const req = httpMock.expectOne(r => r.url === API);
+    const req = httpMock.expectOne((r) => r.url === API);
     expect(req.request.method).toBe('GET');
     expect(req.request.params.keys().sort()).toEqual(['limit', 'offset']);
     expect(req.request.params.get('limit')).toBe('25');
@@ -53,18 +53,20 @@ describe('AuditLogApiService', () => {
   });
 
   it('should send every filter that is set', () => {
-    service.getAuditLogs({
-      limit: 25,
-      offset: 50,
-      userId: 7,
-      username: 'ali',
-      actions: ['LOGIN', 'LOGIN_FAILED'],
-      result: 'failure',
-      from: '2026-09-01T00:00:00.000Z',
-      to: '2026-09-02T00:00:00.000Z',
-    }).subscribe();
+    service
+      .getAuditLogs({
+        limit: 25,
+        offset: 50,
+        userId: 7,
+        username: 'ali',
+        actions: ['LOGIN', 'LOGIN_FAILED'],
+        result: 'failure',
+        from: '2026-09-01T00:00:00.000Z',
+        to: '2026-09-02T00:00:00.000Z',
+      })
+      .subscribe();
 
-    const req = httpMock.expectOne(r => r.url === API);
+    const req = httpMock.expectOne((r) => r.url === API);
     expect(req.request.params.get('offset')).toBe('50');
     expect(req.request.params.get('userId')).toBe('7');
     expect(req.request.params.get('username')).toBe('ali');

@@ -15,9 +15,11 @@ describe('guestGuard', () => {
   const session: AuthSession = { user, accessToken: 'token' };
 
   const runGuard = (): Promise<boolean | UrlTree> =>
-    firstValueFrom(TestBed.runInInjectionContext(() =>
-      guestGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
-    ) as Observable<boolean | UrlTree>);
+    firstValueFrom(
+      TestBed.runInInjectionContext(() =>
+        guestGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+      ) as Observable<boolean | UrlTree>,
+    );
 
   const expectRedirectToProducts = async () => {
     const result = await runGuard();

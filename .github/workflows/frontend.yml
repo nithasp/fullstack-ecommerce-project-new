@@ -1,0 +1,58 @@
+name: Frontend
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'app/frontend/**'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    paths:
+      - 'app/frontend/**'
+      - '.github/workflows/frontend.yml'
+
+defaults:
+  run:
+    working-directory: app/frontend
+
+jobs:
+  check:
+    name: Lint, types, tests and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Check types
+        run: npm run typecheck
+
+      # Reports but does not fail the build: every current high/critical advisory is against
+      # Angular 18 itself (@angular/core, @angular/common, @angular/compiler, @angular/cli,
+      # @angular-devkit/build-angular), which no lockfile change can resolve. Make this blocking,
+      # as the backend workflow has it, once the framework is on a supported major.
+      - name: Check for known vulnerabilities
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      # Chrome is preinstalled on the runner; CHROME_BIN points Karma at it
+      - name: Test
+        run: npm run test:coverage
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+
+      - name: Build
+        run: npm run build -- --configuration production

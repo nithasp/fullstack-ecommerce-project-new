@@ -17,30 +17,28 @@ export class AuthApiService {
   login(username: string, password: string): Observable<AuthSession> {
     return this.http
       .post<ApiResponse<AuthSession>>(`${this.baseUrl}/login`, { username, password }, WITH_COOKIE)
-      .pipe(map(res => res.data));
+      .pipe(map((res) => res.data));
   }
 
   register(username: string, password: string): Observable<AuthSession> {
     return this.http
       .post<ApiResponse<AuthSession>>(`${this.baseUrl}/register`, { username, password }, WITH_COOKIE)
-      .pipe(map(res => res.data));
+      .pipe(map((res) => res.data));
   }
 
   refresh(): Observable<AuthSession> {
     return this.http
       .post<ApiResponse<AuthSession>>(`${this.baseUrl}/refresh`, {}, WITH_COOKIE)
-      .pipe(map(res => res.data));
+      .pipe(map((res) => res.data));
   }
 
   logout(): Observable<unknown> {
     return this.http
       .post<ApiResponse<null>>(`${this.baseUrl}/logout`, {}, WITH_COOKIE)
-      .pipe(map(res => res.data));
+      .pipe(map((res) => res.data));
   }
 
   fetchMe(): Observable<AuthUser> {
-    return this.http
-      .get<ApiResponse<AuthUser>>(`${this.baseUrl}/me`)
-      .pipe(map(res => res.data));
+    return this.http.get<ApiResponse<AuthUser>>(`${this.baseUrl}/me`).pipe(map((res) => res.data));
   }
 }

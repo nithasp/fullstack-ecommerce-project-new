@@ -75,23 +75,40 @@
     overflow-y: hidden;
   }
 
-  &__thumbnail {
-    width: 72px;
-    height: 72px;
-    object-fit: cover;
+  // A button, so the image can be chosen from the keyboard as well as the pointer
+  &__thumbnail-btn {
+    flex: 0 0 auto;
+    padding: 0;
+    line-height: 0;
+    background: none;
     border-radius: $border-radius-md;
     border: 2px solid $color-border;
     cursor: pointer;
-    transition: border-color $transition-fast, transform $transition-fast;
+    transition:
+      border-color $transition-fast,
+      transform $transition-fast;
 
     &:hover {
       border-color: $color-secondary-dark;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
     }
 
     &--active {
       border-color: $color-primary;
       box-shadow: 0 0 0 2px rgba($color-primary, 0.2);
     }
+  }
+
+  &__thumbnail {
+    display: block;
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: $border-radius-sm;
   }
 
   &__info {

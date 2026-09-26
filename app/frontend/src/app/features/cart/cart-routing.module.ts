@@ -5,11 +5,11 @@ import { OrderConfirmationComponent } from './order-confirmation/order-confirmat
 
 const routes: Routes = [
   { path: '', component: CartPageComponent, data: { page: 'Cart' } },
-  { path: 'confirmation', component: OrderConfirmationComponent, data: { page: 'Order confirmation' } }
+  { path: 'confirmation', component: OrderConfirmationComponent, data: { page: 'Order confirmation' } },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
 export class CartRoutingModule {}

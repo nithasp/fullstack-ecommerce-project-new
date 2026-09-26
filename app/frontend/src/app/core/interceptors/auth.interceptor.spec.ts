@@ -45,7 +45,8 @@ describe('authInterceptor', () => {
 
   it('should let a quiet background call fail without telling the user', () => {
     let failed = false;
-    http.post('/api/v1/page-views', { path: '/cart' }, { context: new HttpContext().set(QUIET_ERRORS, true) })
+    http
+      .post('/api/v1/page-views', { path: '/cart' }, { context: new HttpContext().set(QUIET_ERRORS, true) })
       .subscribe({ error: () => (failed = true) });
     httpMock.expectOne('/api/v1/page-views').flush(null, { status: 500, statusText: 'Server Error' });
 

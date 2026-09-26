@@ -192,14 +192,18 @@
     background: $color-primary;
     border-color: $color-primary;
 
-    svg { color: #fff; }
+    svg {
+      color: #fff;
+    }
   }
 
   &--indeterminate {
     background: $color-primary;
     border-color: $color-primary;
 
-    svg { color: #fff; }
+    svg {
+      color: #fff;
+    }
   }
 }
 
@@ -221,7 +225,9 @@
     align-items: center;
     cursor: pointer;
 
-    input[type='checkbox'] { display: none; }
+    input[type='checkbox'] {
+      display: none;
+    }
   }
 
   &__icon {
@@ -257,7 +263,9 @@
     cursor: pointer;
     flex-shrink: 0;
 
-    input[type='checkbox'] { display: none; }
+    input[type='checkbox'] {
+      display: none;
+    }
   }
 
   &__image-link {
@@ -344,7 +352,9 @@
     font-size: $font-size-2xl;
     padding: $spacing-xs;
     line-height: 1;
-    transition: color $transition-fast, transform $transition-fast;
+    transition:
+      color $transition-fast,
+      transform $transition-fast;
 
     &:hover:not(:disabled) {
       color: $color-error;
@@ -464,7 +474,10 @@
     align-items: center;
     gap: $spacing-xs;
 
-    svg { color: $color-primary; flex-shrink: 0; }
+    svg {
+      color: $color-primary;
+      flex-shrink: 0;
+    }
   }
 }
 
@@ -485,8 +498,12 @@
     min-width: 0;
     transition: border-color $transition-fast;
 
-    &:focus { border-color: $color-primary; }
-    &::placeholder { color: $color-text-muted; }
+    &:focus {
+      border-color: $color-primary;
+    }
+    &::placeholder {
+      color: $color-text-muted;
+    }
   }
 
   &__apply {
@@ -500,7 +517,9 @@
     white-space: nowrap;
     transition: background $transition-fast;
 
-    &:hover { background: $color-primary; }
+    &:hover {
+      background: $color-primary;
+    }
   }
 
   &__success {
@@ -561,7 +580,9 @@
   transition: all $transition-fast;
   user-select: none;
 
-  input[type='radio'] { display: none; }
+  input[type='radio'] {
+    display: none;
+  }
 
   &:hover {
     border-color: $color-primary-light;

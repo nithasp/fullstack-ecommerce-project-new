@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { ConfirmDialogService } from '../../../../core/services/ui/confirm-dialog.service';
-import { ConfirmDialogConfig } from '../../../../core/models/confirm-dialog.model';
+import { Component, HostListener, OnInit } from '@angular/core';
+import { ConfirmDialogService } from '@core/services/ui/confirm-dialog.service';
+import { ConfirmDialogConfig } from '@core/models/confirm-dialog.model';
 
 @Component({
   selector: 'app-dialog-confirm',
   templateUrl: './dialog-confirm.component.html',
-  styleUrl: './dialog-confirm.component.scss'
+  styleUrl: './dialog-confirm.component.scss',
 })
 export class DialogConfirmComponent implements OnInit {
   config: ConfirmDialogConfig | null = null;
@@ -14,7 +14,7 @@ export class DialogConfirmComponent implements OnInit {
   constructor(private confirmDialogService: ConfirmDialogService) {}
 
   ngOnInit(): void {
-    this.confirmDialogService.config$.subscribe(config => {
+    this.confirmDialogService.config$.subscribe((config) => {
       if (config) {
         this.closing = false;
       }
@@ -34,5 +34,11 @@ export class DialogConfirmComponent implements OnInit {
 
   onOverlayClick(): void {
     this.cancel();
+  }
+
+  // Dismissing has to be reachable from the keyboard, not only by clicking the backdrop
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.config && !this.closing) this.cancel();
   }
 }

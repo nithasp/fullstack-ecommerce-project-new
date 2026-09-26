@@ -1,45 +1,55 @@
-import { Component } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, inject } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '../../../core/services/auth/auth.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
+import { AuthService } from '@core/services/auth/auth.service';
+import { NotificationService } from '@core/services/ui/notification.service';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent {
-  username = '';
-  password = '';
+  // Field-level inject(), because `target: ES2022` initializes class fields before the
+  // constructor body runs and `form` reads `fb` as it is declared
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly notification = inject(NotificationService);
+  private readonly router = inject(Router);
+
   isLoading = false;
-  submitted = false;
 
-  constructor(
-    private authService: AuthService,
-    private notification: NotificationService,
-    private router: Router
-  ) {}
+  readonly form = this.fb.nonNullable.group({
+    username: ['', Validators.required],
+    password: ['', Validators.required],
+  });
 
-  onSubmit(form: NgForm): void {
-    this.submitted = true;
+  onSubmit(): void {
+    // A disabled form reports status DISABLED rather than INVALID, so the check below would
+    // let a second submit through while the first is still in flight
+    if (this.isLoading) return;
 
-    if (form.invalid) {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
       this.notification.error('Please fill in all required fields.');
       return;
     }
 
     this.isLoading = true;
+    this.form.disable();
 
-    this.authService.login(this.username, this.password).subscribe({
+    const { username, password } = this.form.getRawValue();
+
+    this.authService.login(username, password).subscribe({
       next: () => {
         this.notification.success('Login successful! Welcome back.');
-        this.router.navigate(['/products']);
+        void this.router.navigate(['/products']);
       },
       error: (err: Error) => {
         this.notification.error(err.message || 'Login failed. Please try again.');
         this.isLoading = false;
-      }
+        this.form.enable();
+      },
     });
   }
 }

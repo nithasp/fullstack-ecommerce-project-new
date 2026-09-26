@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
-import { PageViewsComponent, PAGE_VIEWS_PAGE_SIZE, USER_FILTER_DEBOUNCE_MS } from './page-views.component';
+import { PageViewsComponent, PAGE_VIEWS_PAGE_SIZE } from './page-views.component';
+import { USER_FILTER_DEBOUNCE_MS } from '../utils/admin-filters';
 import { PageViewApiService } from '../services/page-view-api.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { NotificationService } from '@core/services/ui/notification.service';
+import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { PageView, PageViewQuery } from '../models/page-view.model';
 
 describe('PageViewsComponent', () => {
@@ -29,10 +30,12 @@ describe('PageViewsComponent', () => {
 
   beforeEach(async () => {
     apiSpy = jasmine.createSpyObj('PageViewApiService', ['getPageViews']);
-    apiSpy.getPageViews.and.returnValue(of({
-      items: [view(1), view(2, { path: '/cart', page: 'Cart' })],
-      total: 60,
-    }));
+    apiSpy.getPageViews.and.returnValue(
+      of({
+        items: [view(1), view(2, { path: '/cart', page: 'Cart' })],
+        total: 60,
+      }),
+    );
     notificationSpy = jasmine.createSpyObj('NotificationService', ['success', 'error', 'info', 'warning']);
 
     await TestBed.configureTestingModule({
@@ -40,8 +43,8 @@ describe('PageViewsComponent', () => {
       declarations: [PageViewsComponent, LoadingSpinnerComponent],
       providers: [
         { provide: PageViewApiService, useValue: apiSpy },
-        { provide: NotificationService, useValue: notificationSpy }
-      ]
+        { provide: NotificationService, useValue: notificationSpy },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PageViewsComponent);
@@ -55,11 +58,11 @@ describe('PageViewsComponent', () => {
   });
 
   it('should render one row per page view, with its page name and path', () => {
-    const rows = fixture.nativeElement.querySelectorAll('.activity-log__row');
+    const rows = fixture.nativeElement.querySelectorAll('.admin-log__row');
     expect(rows.length).toBe(2);
     expect(rows[0].textContent).toContain('alice');
     expect(rows[0].textContent).toContain('Product detail');
-    expect(rows[1].querySelector('.activity-log__route').textContent.trim()).toBe('/cart');
+    expect(rows[1].querySelector('.admin-log__route').textContent.trim()).toBe('/cart');
   });
 
   it('should read a whole number as a user id and any other text as a username', fakeAsync(() => {
@@ -103,10 +106,10 @@ describe('PageViewsComponent', () => {
   });
 
   it('should show the details of a page view when its row is clicked', () => {
-    fixture.nativeElement.querySelector('.activity-log__row').click();
+    fixture.nativeElement.querySelector('.admin-log__row').click();
     fixture.detectChanges();
 
-    const details = fixture.nativeElement.querySelector('.activity-log__details');
+    const details = fixture.nativeElement.querySelector('.admin-log__details');
     expect(details.textContent).toContain('203.0.113.5');
     expect(details.textContent).toContain('Mozilla/5.0');
   });
@@ -119,7 +122,7 @@ describe('PageViewsComponent', () => {
   });
 
   it('should offer a link back to the activity log', () => {
-    const tabs = fixture.nativeElement.querySelectorAll('.activity-log__tab');
+    const tabs = fixture.nativeElement.querySelectorAll('.admin-log__tab');
     expect(tabs.length).toBe(2);
     expect(tabs[0].textContent).toContain('Activity log');
   });

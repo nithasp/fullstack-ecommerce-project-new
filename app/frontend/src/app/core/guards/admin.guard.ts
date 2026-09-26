@@ -12,12 +12,12 @@ export const adminGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return authService.authInitialized$.pipe(
-    filter(initialized => initialized),
+    filter((initialized) => initialized),
     take(1),
     map(() => {
       const user = authService.getCurrentUser();
       if (!user) return false;
       return user.role === 'admin' ? true : router.createUrlTree(['/products']);
-    })
+    }),
   );
 };

@@ -25,7 +25,7 @@
         All
       </button>
       <button
-        *ngFor="let category of categories"
+        *ngFor="let category of categories; trackBy: trackByValue"
         class="product-list__category-btn"
         [class.product-list__category-btn--active]="selectedCategory === category"
         (click)="filterByCategory(category)"
@@ -45,19 +45,14 @@
 
   <div *ngIf="!isLoading" class="product-list__grid">
     <app-product-card
-      *ngFor="let product of products; let i = index"
+      *ngFor="let product of products; let i = index; trackBy: trackById"
       [product]="product"
       class="animate-slide-up animate-delay-{{ (i % pageSize) + 1 }}"
     ></app-product-card>
   </div>
 
   <div *ngIf="!isLoading && hasMore" class="product-list__more">
-    <button
-      type="button"
-      class="product-list__more-btn"
-      [disabled]="isLoadingMore"
-      (click)="loadMore()"
-    >
+    <button type="button" class="product-list__more-btn" [disabled]="isLoadingMore" (click)="loadMore()">
       {{ isLoadingMore ? 'Loading...' : 'Load more' }}
     </button>
   </div>

@@ -28,7 +28,9 @@
     border: none;
     cursor: pointer;
     color: $color-text-light;
-    transition: background $transition-fast, color $transition-fast;
+    transition:
+      background $transition-fast,
+      color $transition-fast;
     flex-shrink: 0;
 
     &:hover:not(:disabled) {
@@ -76,4 +78,3 @@
     }
   }
 }
-

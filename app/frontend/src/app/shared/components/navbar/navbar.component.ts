@@ -1,75 +1,70 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { distinctUntilChanged, skip } from 'rxjs/operators';
-import { CartService } from '../../../core/services/cart/cart.service';
-import { AuthService } from '../../../core/services/auth/auth.service';
-import { AuthUser } from '../../../core/models/auth.model';
-import { NotificationService } from '../../../core/services/ui/notification.service';
+import { Observable, Subscription } from 'rxjs';
+import { distinctUntilChanged, map, skip, startWith } from 'rxjs/operators';
+import { CartService } from '@core/services/cart/cart.service';
+import { AuthService } from '@core/services/auth/auth.service';
+import { AuthUser } from '@core/models/auth.model';
+import { NotificationService } from '@core/services/ui/notification.service';
 
 @Component({
   selector: 'app-navbar',
   templateUrl: './navbar.component.html',
-  styleUrl: './navbar.component.scss'
+  styleUrl: './navbar.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarComponent implements OnInit, OnDestroy {
+  private readonly cartService = inject(CartService);
+  private readonly authService = inject(AuthService);
+  private readonly notification = inject(NotificationService);
+  private readonly router = inject(Router);
+  private readonly elRef = inject(ElementRef);
+
   title = 'MyStore';
-  cartCount = 0;
   mobileMenuOpen = false;
   menuClosing = false;
-  isLoggedIn = false;
   userMenuOpen = false;
-  currentUser: AuthUser | null = null;
-  private cartSub!: Subscription;
-  private authSub!: Subscription;
-  private userSub!: Subscription;
 
-  constructor(
-    private cartService: CartService,
-    private authService: AuthService,
-    private notification: NotificationService,
-    private router: Router,
-    private elRef: ElementRef
-  ) {}
+  // Read through the async pipe, so the template never holds a copy of service state that could
+  // fall out of step with it
+  readonly isLoggedIn$: Observable<boolean> = this.authService.isLoggedIn$;
+  readonly currentUser$: Observable<AuthUser | null> = this.authService.currentUser$;
+  readonly displayName$: Observable<string> = this.currentUser$.pipe(map((user) => user?.username ?? 'User'));
+
+  // Only decides whether the link shows; the admin API checks the role itself
+  readonly isAdmin$: Observable<boolean> = this.currentUser$.pipe(map((user) => user?.role === 'admin'));
+
+  readonly cartCount$: Observable<number> = this.cartService.cart$.pipe(
+    map(() => this.cartService.getCartCount()),
+    startWith(this.cartService.getCartCount()),
+  );
+
+  private authSub!: Subscription;
 
   ngOnInit(): void {
-    this.isLoggedIn = this.authService.isLoggedIn;
-    this.currentUser = this.authService.getCurrentUser();
-
-    this.cartSub = this.cartService.cart$.subscribe(() => {
-      this.cartCount = this.cartService.getCartCount();
-    });
-
-    this.authSub = this.authService.isLoggedIn$.pipe(
-      distinctUntilChanged(),
-      skip(1)
-    ).subscribe(loggedIn => {
-      this.isLoggedIn = loggedIn;
-      if (!loggedIn) {
-        this.userMenuOpen = false;
-      } else {
-        this.authService.fetchCurrentUser().subscribe({ error: () => {} });
-      }
-    });
-
-    this.userSub = this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
+    // A fresh profile is fetched on the transition into a session; skip(1) drops the replay of
+    // the value the stream already holds
+    this.authSub = this.authService.isLoggedIn$
+      .pipe(distinctUntilChanged(), skip(1))
+      .subscribe((loggedIn) => {
+        if (!loggedIn) {
+          this.userMenuOpen = false;
+        } else {
+          this.authService.fetchCurrentUser().subscribe({ error: () => {} });
+        }
+      });
   }
 
   ngOnDestroy(): void {
-    this.cartSub.unsubscribe();
     this.authSub.unsubscribe();
-    this.userSub.unsubscribe();
-  }
-
-  get displayName(): string {
-    return this.currentUser?.username ?? 'User';
-  }
-
-  // Only decides whether the link shows; the admin API checks the role itself
-  get isAdmin(): boolean {
-    return this.currentUser?.role === 'admin';
   }
 
   toggleUserMenu(): void {
@@ -85,7 +80,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.notification.success('You have been logged out.');
     this.closeMobileMenu();
     this.closeUserMenu();
-    this.router.navigate(['/auth/login']);
+    void this.router.navigate(['/auth/login']);
   }
 
   toggleMobileMenu(): void {

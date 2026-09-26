@@ -2,25 +2,30 @@
   <div class="auth-card">
     <div class="auth-card__header">
       <div class="auth-card__icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-          <polyline points="10 17 15 12 10 7"/>
-          <line x1="15" y1="12" x2="3" y2="12"/>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+          <polyline points="10 17 15 12 10 7" />
+          <line x1="15" y1="12" x2="3" y2="12" />
         </svg>
       </div>
       <h2>Welcome Back</h2>
       <p class="auth-card__subtitle">Sign in to your account</p>
     </div>
 
-    <form #loginForm="ngForm" (ngSubmit)="onSubmit(loginForm)" class="auth-card__form" novalidate>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-card__form" novalidate>
       <app-input-field
         name="username"
         label="Username"
         placeholder="Enter your username"
-        [required]="true"
-        [forceTouch]="submitted"
-        [(ngModel)]="username"
-        [disabled]="isLoading"
+        formControlName="username"
       ></app-input-field>
 
       <app-input-field
@@ -28,20 +33,18 @@
         label="Password"
         type="password"
         placeholder="Enter your password"
-        [required]="true"
-        [forceTouch]="submitted"
-        [(ngModel)]="password"
-        [disabled]="isLoading"
+        formControlName="password"
       ></app-input-field>
 
-      <button
-        type="submit"
-        class="auth-btn"
-        [disabled]="isLoading"
-      >
+      <button type="submit" class="auth-btn" [disabled]="isLoading">
         <span *ngIf="!isLoading">Sign In</span>
         <span *ngIf="isLoading" class="auth-btn__loading">
-          <app-loading-spinner size="small" layout="inline" message="Signing in..." variant="light"></app-loading-spinner>
+          <app-loading-spinner
+            size="small"
+            layout="inline"
+            message="Signing in..."
+            variant="light"
+          ></app-loading-spinner>
         </span>
       </button>
     </form>

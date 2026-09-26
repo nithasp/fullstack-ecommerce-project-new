@@ -4,9 +4,9 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ToastrModule } from 'ngx-toastr';
 import { CartPageComponent } from './cart-page.component';
-import { CartService } from '../../../core/services/cart/cart.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
-import { InputFieldComponent } from '../../../shared/components/form/input-field/input-field.component';
+import { CartService } from '@core/services/cart/cart.service';
+import { NotificationService } from '@core/services/ui/notification.service';
+import { InputFieldComponent } from '@shared/components/form/input-field/input-field.component';
 import { Product, CartItem } from '../../products/models/product.model';
 
 describe('CartPageComponent', () => {
@@ -23,14 +23,12 @@ describe('CartPageComponent', () => {
     image: 'https://example.com/img.jpg',
     description: 'A test product',
     previewImg: [],
-    types: [
-      { _id: 't1', productId: 1001, color: 'Black', quantity: 50, price: 79.99, stock: 50, image: '' }
-    ],
+    types: [{ _id: 't1', productId: 1001, color: 'Black', quantity: 50, price: 79.99, stock: 50, image: '' }],
     reviews: [],
     overallRating: 4.5,
     stock: 50,
     shopId: 'shop1',
-    shopName: 'Test Shop'
+    shopName: 'Test Shop',
   };
 
   const mockProduct2: Product = {
@@ -39,7 +37,7 @@ describe('CartPageComponent', () => {
     name: 'Test Product 2',
     price: '49.99',
     shopId: 'shop2',
-    shopName: 'Another Shop'
+    shopName: 'Another Shop',
   };
 
   beforeEach(async () => {
@@ -49,10 +47,7 @@ describe('CartPageComponent', () => {
       imports: [RouterTestingModule, HttpClientTestingModule, ToastrModule.forRoot()],
       declarations: [CartPageComponent, InputFieldComponent],
       schemas: [NO_ERRORS_SCHEMA],
-      providers: [
-        CartService,
-        { provide: NotificationService, useValue: notificationSpy }
-      ]
+      providers: [CartService, { provide: NotificationService, useValue: notificationSpy }],
     }).compileComponents();
 
     cartService = TestBed.inject(CartService);
@@ -78,12 +73,24 @@ describe('CartPageComponent', () => {
   });
 
   it('should calculate item price correctly', () => {
-    const item: CartItem = { product: mockProduct, quantity: 1, selectedType: mockProduct.types[0], shopId: 'shop1', shopName: 'Test Shop' };
+    const item: CartItem = {
+      product: mockProduct,
+      quantity: 1,
+      selectedType: mockProduct.types[0],
+      shopId: 'shop1',
+      shopName: 'Test Shop',
+    };
     expect(component.getItemPrice(item)).toBe(79.99);
   });
 
   it('should calculate item subtotal correctly', () => {
-    const item: CartItem = { product: mockProduct, quantity: 3, selectedType: mockProduct.types[0], shopId: 'shop1', shopName: 'Test Shop' };
+    const item: CartItem = {
+      product: mockProduct,
+      quantity: 3,
+      selectedType: mockProduct.types[0],
+      shopId: 'shop1',
+      shopName: 'Test Shop',
+    };
     expect(component.getItemSubtotal(item)).toBeCloseTo(239.97, 2);
   });
 
@@ -130,7 +137,13 @@ describe('CartPageComponent', () => {
   it('should remove item from cart', () => {
     cartService.addToCartLocal(mockProduct, 1, mockProduct.types[0]);
     fixture.detectChanges();
-    const item: CartItem = { product: mockProduct, quantity: 1, selectedType: mockProduct.types[0], shopId: 'shop1', shopName: 'Test Shop' };
+    const item: CartItem = {
+      product: mockProduct,
+      quantity: 1,
+      selectedType: mockProduct.types[0],
+      shopId: 'shop1',
+      shopName: 'Test Shop',
+    };
     component.removeItem(item);
     expect(component.cartItems.length).toBe(0);
     expect(notificationSpy.info).toHaveBeenCalled();

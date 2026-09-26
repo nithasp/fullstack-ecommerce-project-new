@@ -8,7 +8,7 @@ export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return authService.authInitialized$.pipe(
-    filter(initialized => initialized),
+    filter((initialized) => initialized),
     take(1),
     switchMap(() => {
       if (authService.hasValidToken()) return of(true);
@@ -17,10 +17,10 @@ export const authGuard: CanActivateFn = () => {
         map(() => true),
         catchError(() => {
           authService.clearSession();
-          router.navigate(['/auth/login']);
+          void router.navigate(['/auth/login']);
           return of(false);
-        })
+        }),
       );
-    })
+    }),
   );
 };

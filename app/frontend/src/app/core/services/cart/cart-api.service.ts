@@ -12,33 +12,27 @@ export class CartApiService {
   constructor(private http: HttpClient) {}
 
   getCart(): Observable<CartApiItem[]> {
-    return this.http
-      .get<ApiResponse<CartApiItem[]>>(this.baseUrl)
-      .pipe(map(res => res.data));
+    return this.http.get<ApiResponse<CartApiItem[]>>(this.baseUrl).pipe(map((res) => res.data));
   }
 
   addItem(payload: AddCartItemPayload): Observable<CartApiItem> {
-    return this.http
-      .post<ApiResponse<CartApiItem>>(this.baseUrl, payload)
-      .pipe(map(res => res.data));
+    return this.http.post<ApiResponse<CartApiItem>>(this.baseUrl, payload).pipe(map((res) => res.data));
   }
 
   updateItem(cartItemId: number, quantity: number): Observable<CartApiItem> {
     return this.http
       .patch<ApiResponse<CartApiItem>>(`${this.baseUrl}/${cartItemId}`, { quantity })
-      .pipe(map(res => res.data));
+      .pipe(map((res) => res.data));
   }
 
   removeItem(cartItemId: number): Observable<CartApiItem> {
     return this.http
       .delete<ApiResponse<CartApiItem>>(`${this.baseUrl}/${cartItemId}`)
-      .pipe(map(res => res.data));
+      .pipe(map((res) => res.data));
   }
 
   clearCart(): Observable<null> {
-    return this.http
-      .delete<ApiResponse<null>>(this.baseUrl)
-      .pipe(map(res => res.data));
+    return this.http.delete<ApiResponse<null>>(this.baseUrl).pipe(map((res) => res.data));
   }
 
   // The server charges for the cart rows themselves, at the price and stock it holds for them,
@@ -46,6 +40,6 @@ export class CartApiService {
   checkout(cartItemIds: number[], addressId: number): Observable<CheckoutResponse> {
     return this.http
       .post<ApiResponse<CheckoutResponse>>(`${this.baseUrl}/checkout`, { cartItemIds, addressId })
-      .pipe(map(res => res.data));
+      .pipe(map((res) => res.data));
   }
 }

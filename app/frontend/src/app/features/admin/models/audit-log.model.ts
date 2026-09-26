@@ -1,10 +1,18 @@
-import { UserRole } from '../../../core/models/auth.model';
+import { UserRole } from '@core/models/auth.model';
 
 export type AuditAction =
   'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGIN_FAILED' | 'LOGOUT' | 'REGISTER' | 'SECURITY';
 
 export const AUDIT_ACTIONS: AuditAction[] = [
-  'CREATE', 'READ', 'UPDATE', 'DELETE', 'LOGIN', 'LOGIN_FAILED', 'LOGOUT', 'REGISTER', 'SECURITY',
+  'CREATE',
+  'READ',
+  'UPDATE',
+  'DELETE',
+  'LOGIN',
+  'LOGIN_FAILED',
+  'LOGOUT',
+  'REGISTER',
+  'SECURITY',
 ];
 
 export type AuditResult = 'success' | 'failure';

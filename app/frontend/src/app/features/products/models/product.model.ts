@@ -44,4 +44,3 @@ export interface CartItem {
   shopId: string;
   shopName: string;
 }
-

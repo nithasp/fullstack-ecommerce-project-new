@@ -1,66 +1,66 @@
 <div class="auth-page">
-    <div class="auth-card">
-        <div class="auth-card__header">
-            <div class="auth-card__icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="8.5" cy="7" r="4" />
-                    <line x1="20" y1="8" x2="20" y2="14" />
-                    <line x1="23" y1="11" x2="17" y2="11" />
-                </svg>
-            </div>
-            <h2>Create Account</h2>
-            <p class="auth-card__subtitle">Join us and start shopping</p>
-        </div>
-
-        <form #registerForm="ngForm" (ngSubmit)="onSubmit(registerForm)" class="auth-card__form" novalidate>
-            <app-input-field
-                name="username"
-                label="Username"
-                placeholder="Choose a username"
-                [required]="true"
-                [minLength]="3"
-                [forceTouch]="submitted"
-                [(ngModel)]="username"
-                [disabled]="isLoading"
-            ></app-input-field>
-
-            <app-input-field
-                name="password"
-                label="Password"
-                type="password"
-                placeholder="Create a password"
-                [required]="true"
-                [minLength]="8"
-                [forceTouch]="submitted"
-                [(ngModel)]="password"
-                [disabled]="isLoading"
-            ></app-input-field>
-
-            <app-input-field
-                name="confirmPassword"
-                label="Confirm Password"
-                type="password"
-                placeholder="Confirm your password"
-                [required]="true"
-                [errorMessages]="confirmErrorMessages"
-                [extraError]="passwordMismatch ? 'Passwords do not match' : ''"
-                [forceTouch]="submitted"
-                [(ngModel)]="confirmPassword"
-                [disabled]="isLoading"
-            ></app-input-field>
-
-            <button type="submit" class="auth-btn" [disabled]="isLoading">
-                <span *ngIf="!isLoading">Create Account</span>
-                <span *ngIf="isLoading" class="auth-btn__loading">
-                    <app-loading-spinner size="small" layout="inline" message="Creating account..." variant="light"></app-loading-spinner>
-                </span>
-            </button>
-        </form>
-
-        <div class="auth-card__footer">
-            <p>Already have an account? <a routerLink="/auth/login">Sign in</a></p>
-        </div>
+  <div class="auth-card">
+    <div class="auth-card__header">
+      <div class="auth-card__icon">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="8.5" cy="7" r="4" />
+          <line x1="20" y1="8" x2="20" y2="14" />
+          <line x1="23" y1="11" x2="17" y2="11" />
+        </svg>
+      </div>
+      <h2>Create Account</h2>
+      <p class="auth-card__subtitle">Join us and start shopping</p>
     </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-card__form" novalidate>
+      <app-input-field
+        name="username"
+        label="Username"
+        placeholder="Choose a username"
+        formControlName="username"
+      ></app-input-field>
+
+      <app-input-field
+        name="password"
+        label="Password"
+        type="password"
+        placeholder="Create a password"
+        formControlName="password"
+      ></app-input-field>
+
+      <app-input-field
+        name="confirmPassword"
+        label="Confirm Password"
+        type="password"
+        placeholder="Confirm your password"
+        [errorMessages]="confirmErrorMessages"
+        formControlName="confirmPassword"
+      ></app-input-field>
+
+      <button type="submit" class="auth-btn" [disabled]="isLoading">
+        <span *ngIf="!isLoading">Create Account</span>
+        <span *ngIf="isLoading" class="auth-btn__loading">
+          <app-loading-spinner
+            size="small"
+            layout="inline"
+            message="Creating account..."
+            variant="light"
+          ></app-loading-spinner>
+        </span>
+      </button>
+    </form>
+
+    <div class="auth-card__footer">
+      <p>Already have an account? <a routerLink="/auth/login">Sign in</a></p>
+    </div>
+  </div>
 </div>

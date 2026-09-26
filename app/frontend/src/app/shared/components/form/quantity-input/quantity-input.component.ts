@@ -9,9 +9,9 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => QuantityInputComponent),
-      multi: true
-    }
-  ]
+      multi: true,
+    },
+  ],
 })
 export class QuantityInputComponent implements ControlValueAccessor, OnDestroy {
   @Input() min = 1;
@@ -121,4 +121,3 @@ export class QuantityInputComponent implements ControlValueAccessor, OnDestroy {
     return this.value >= this.max;
   }
 }
-

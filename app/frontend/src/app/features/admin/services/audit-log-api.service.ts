@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { AuditLog, AuditLogQuery } from '../models/audit-log.model';
-import { ApiResponse, Page } from '../../../core/models/api.model';
-import { API } from '../../../core/config/api-config';
+import { ApiResponse, Page } from '@core/models/api.model';
+import { API } from '@core/config/api-config';
 
 @Injectable({ providedIn: 'root' })
 export class AuditLogApiService {
@@ -22,6 +22,6 @@ export class AuditLogApiService {
 
     return this.http
       .get<ApiResponse<AuditLog[]>>(this.baseUrl, { params })
-      .pipe(map(res => ({ items: res.data, total: res.meta?.total ?? res.data.length })));
+      .pipe(map((res) => ({ items: res.data, total: res.meta?.total ?? res.data.length })));
   }
 }

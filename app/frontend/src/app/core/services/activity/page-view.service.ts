@@ -18,19 +18,23 @@ export class PageViewService {
   constructor(
     private http: HttpClient,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
   ) {}
 
   trackPageViews(): Subscription {
-    return this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      filter(() => this.authService.isLoggedIn),
-      mergeMap((event) =>
-        this.http
-          .post(this.baseUrl, this.reportFor(event.urlAfterRedirects), { context: new HttpContext().set(QUIET_ERRORS, true) })
-          .pipe(catchError(() => EMPTY))
+    return this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        filter(() => this.authService.isLoggedIn),
+        mergeMap((event) =>
+          this.http
+            .post(this.baseUrl, this.reportFor(event.urlAfterRedirects), {
+              context: new HttpContext().set(QUIET_ERRORS, true),
+            })
+            .pipe(catchError(() => EMPTY)),
+        ),
       )
-    ).subscribe();
+      .subscribe();
   }
 
   private reportFor(url: string): PageViewReport {

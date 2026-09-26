@@ -1,11 +1,12 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { debounceTime, Subject, Subscription } from 'rxjs';
 import { PageView, PageViewQuery } from '../models/page-view.model';
 import { PageViewApiService } from '../services/page-view-api.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
+import { localDayStart, USER_FILTER_DEBOUNCE_MS } from '../utils/admin-filters';
+import { trackById } from '@shared/utils/track-by';
+import { NotificationService } from '@core/services/ui/notification.service';
 
 export const PAGE_VIEWS_PAGE_SIZE = 25;
-export const USER_FILTER_DEBOUNCE_MS = 300;
 
 export interface PageViewFilters {
   user: string;
@@ -16,16 +17,11 @@ export interface PageViewFilters {
 
 const NO_FILTERS: PageViewFilters = { user: '', path: '', from: '', to: '' };
 
-function localDayStart(date: string, addDays = 0): string {
-  const day = new Date(`${date}T00:00:00`);
-  day.setDate(day.getDate() + addDays);
-  return day.toISOString();
-}
-
 @Component({
   selector: 'app-page-views',
   templateUrl: './page-views.component.html',
-  styleUrl: '../activity-log/activity-log.component.scss'
+  styleUrl: './page-views.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PageViewsComponent implements OnInit, OnDestroy {
   readonly pageSize = PAGE_VIEWS_PAGE_SIZE;
@@ -35,6 +31,8 @@ export class PageViewsComponent implements OnInit, OnDestroy {
   offset = 0;
   isLoading = true;
   filters: PageViewFilters = { ...NO_FILTERS };
+
+  readonly trackById = trackById;
   expandedId: number | null = null;
 
   private readonly filterTerms = new Subject<void>();
@@ -43,8 +41,9 @@ export class PageViewsComponent implements OnInit, OnDestroy {
 
   constructor(
     private pageViewApi: PageViewApiService,
-    private notificationService: NotificationService
-  ) { }
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   get hasFilters(): boolean {
     const { user, path, from, to } = this.filters;
@@ -69,7 +68,7 @@ export class PageViewsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscriptions.add(
-      this.filterTerms.pipe(debounceTime(USER_FILTER_DEBOUNCE_MS)).subscribe(() => this.fetchPage(0))
+      this.filterTerms.pipe(debounceTime(USER_FILTER_DEBOUNCE_MS)).subscribe(() => this.fetchPage(0)),
     );
 
     this.fetchPage(0);
@@ -111,8 +110,11 @@ export class PageViewsComponent implements OnInit, OnDestroy {
     this.expandedId = this.expandedId === id ? null : id;
   }
 
+  // OnPush: state that arrives from a request or a debounced filter, rather than from a
+  // template event, has to say so
   private fetchPage(offset: number): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.pageRequest?.unsubscribe();
     this.pageRequest = this.pageViewApi.getPageViews(this.buildQuery(offset)).subscribe({
       next: (page) => {
@@ -121,11 +123,13 @@ export class PageViewsComponent implements OnInit, OnDestroy {
         this.offset = offset;
         this.expandedId = null;
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.notificationService.error('Failed to load page views');
         this.isLoading = false;
-      }
+        this.cdr.markForCheck();
+      },
     });
   }
 

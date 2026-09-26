@@ -11,8 +11,8 @@ export class ConfirmDialogService {
 
   confirm(config: ConfirmDialogConfig): Observable<boolean> {
     this._config$.next(config);
-    return new Observable<boolean>(observer => {
-      const sub = this._result$.subscribe(result => {
+    return new Observable<boolean>((observer) => {
+      const sub = this._result$.subscribe((result) => {
         observer.next(result);
         observer.complete();
         sub.unsubscribe();

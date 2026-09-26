@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { Product } from '../models/product.model';
-import { ApiResponse, Page } from '../../../core/models/api.model';
-import { API } from '../../../core/config/api-config';
+import { ApiResponse, Page } from '@core/models/api.model';
+import { API } from '@core/config/api-config';
 
 export interface ProductQuery {
   limit: number;
@@ -13,7 +13,7 @@ export interface ProductQuery {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ProductService {
   private readonly baseUrl = `${API.baseUrl}/products`;
@@ -27,18 +27,14 @@ export class ProductService {
 
     return this.http
       .get<ApiResponse<Product[]>>(this.baseUrl, { params })
-      .pipe(map(res => ({ items: res.data, total: res.meta?.total ?? res.data.length })));
+      .pipe(map((res) => ({ items: res.data, total: res.meta?.total ?? res.data.length })));
   }
 
   getCategories(): Observable<string[]> {
-    return this.http
-      .get<ApiResponse<string[]>>(`${this.baseUrl}/categories`)
-      .pipe(map(res => res.data));
+    return this.http.get<ApiResponse<string[]>>(`${this.baseUrl}/categories`).pipe(map((res) => res.data));
   }
 
   getProductById(id: string): Observable<Product> {
-    return this.http
-      .get<ApiResponse<Product>>(`${this.baseUrl}/${id}`)
-      .pipe(map(res => res.data));
+    return this.http.get<ApiResponse<Product>>(`${this.baseUrl}/${id}`).pipe(map((res) => res.data));
   }
 }

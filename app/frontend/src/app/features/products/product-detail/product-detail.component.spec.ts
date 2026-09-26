@@ -7,8 +7,8 @@ import { ToastrModule } from 'ngx-toastr';
 import { of } from 'rxjs';
 import { ProductDetailComponent } from './product-detail.component';
 import { ProductService } from '../services/product.service';
-import { CartService } from '../../../core/services/cart/cart.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
+import { CartService } from '@core/services/cart/cart.service';
+import { NotificationService } from '@core/services/ui/notification.service';
 import { Product } from '../models/product.model';
 
 describe('ProductDetailComponent', () => {
@@ -27,15 +27,31 @@ describe('ProductDetailComponent', () => {
     description: 'Premium wireless headphones',
     previewImg: ['https://example.com/main.jpg', 'https://example.com/side.jpg'],
     types: [
-      { _id: 't1', productId: 1001, color: 'Black', quantity: 50, price: 79.99, stock: 50, image: 'https://example.com/black.jpg' },
-      { _id: 't2', productId: 1002, color: 'Silver', quantity: 35, price: 84.99, stock: 35, image: 'https://example.com/silver.jpg' }
+      {
+        _id: 't1',
+        productId: 1001,
+        color: 'Black',
+        quantity: 50,
+        price: 79.99,
+        stock: 50,
+        image: 'https://example.com/black.jpg',
+      },
+      {
+        _id: 't2',
+        productId: 1002,
+        color: 'Silver',
+        quantity: 35,
+        price: 84.99,
+        stock: 35,
+        image: 'https://example.com/silver.jpg',
+      },
     ],
     reviews: [
       { star: 5, comment: 'Great product!', userName: 'John' },
-      { star: 4, comment: 'Good value', userName: 'Jane' }
+      { star: 4, comment: 'Good value', userName: 'Jane' },
     ],
     overallRating: 4.5,
-    stock: 85
+    stock: 85,
   };
 
   beforeEach(async () => {
@@ -44,19 +60,15 @@ describe('ProductDetailComponent', () => {
     notificationSpy = jasmine.createSpyObj('NotificationService', ['success', 'error', 'info', 'warning']);
 
     await TestBed.configureTestingModule({
-      imports: [
-        HttpClientTestingModule,
-        RouterTestingModule,
-        ToastrModule.forRoot()
-      ],
+      imports: [HttpClientTestingModule, RouterTestingModule, ToastrModule.forRoot()],
       declarations: [ProductDetailComponent],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: ProductService, useValue: productServiceSpy },
         { provide: NotificationService, useValue: notificationSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'prod1' } } } },
-        CartService
-      ]
+        CartService,
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductDetailComponent);
@@ -110,9 +122,7 @@ describe('ProductDetailComponent', () => {
     spyOn(cartService, 'addToCartLocal');
     component.selectedQuantity = 2;
     component.addToCart();
-    expect(cartService.addToCartLocal).toHaveBeenCalledWith(
-      component.product!, 2, component.selectedType
-    );
+    expect(cartService.addToCartLocal).toHaveBeenCalledWith(component.product!, 2, component.selectedType);
     tick(400);
     expect(notificationSpy.success).toHaveBeenCalled();
   }));

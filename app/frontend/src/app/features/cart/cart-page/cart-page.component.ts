@@ -2,17 +2,18 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { combineLatest, Subscription } from 'rxjs';
 import { CartItem } from '../../products/models/product.model';
-import { CartService } from '../../../core/services/cart/cart.service';
-import { CartApiService } from '../../../core/services/cart/cart-api.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
+import { CartService } from '@core/services/cart/cart.service';
+import { CartApiService } from '@core/services/cart/cart-api.service';
+import { NotificationService } from '@core/services/ui/notification.service';
 import { AddressApiService } from '../services/address-api.service';
 import { AddressEntry } from '../models/address.model';
 import { PaymentMethod, ShopGroup } from '../models/cart.model';
+import { trackById } from '@shared/utils/track-by';
 
 @Component({
   selector: 'app-cart-page',
   templateUrl: './cart-page.component.html',
-  styleUrl: './cart-page.component.scss'
+  styleUrl: './cart-page.component.scss',
 })
 export class CartPageComponent implements OnInit, OnDestroy {
   cartItems: CartItem[] = [];
@@ -29,10 +30,22 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
   selectedPayment = 'visa';
   paymentMethods: PaymentMethod[] = [
-    { id: 'visa',       name: 'Visa',          description: 'Credit / Debit Card',  badge: 'VISA', color: '#1a1f71' },
-    { id: 'mastercard', name: 'Mastercard',     description: 'Credit / Debit Card',  badge: 'MC',   color: '#eb001b' },
-    { id: 'qrcode',     name: 'QR Code',        description: 'Scan to Pay',          badge: 'QR',   color: '#6366f1' },
-    { id: 'bank',       name: 'Bank Transfer',  description: 'Direct Bank Transfer', badge: 'BANK', color: '#059669' },
+    { id: 'visa', name: 'Visa', description: 'Credit / Debit Card', badge: 'VISA', color: '#1a1f71' },
+    {
+      id: 'mastercard',
+      name: 'Mastercard',
+      description: 'Credit / Debit Card',
+      badge: 'MC',
+      color: '#eb001b',
+    },
+    { id: 'qrcode', name: 'QR Code', description: 'Scan to Pay', badge: 'QR', color: '#6366f1' },
+    {
+      id: 'bank',
+      name: 'Bank Transfer',
+      description: 'Direct Bank Transfer',
+      badge: 'BANK',
+      color: '#059669',
+    },
   ];
 
   discountCode = '';
@@ -43,7 +56,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
   private readonly MOCK_CODES: Record<string, number> = {
     '10%OFF': 0.1,
-    'SAVE20': 0.2,
+    SAVE20: 0.2,
   };
 
   private cartSub!: Subscription;
@@ -54,28 +67,27 @@ export class CartPageComponent implements OnInit, OnDestroy {
     private cartApi: CartApiService,
     private addressApi: AddressApiService,
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.fetchAddresses();
 
-    this.cartSub = combineLatest([
-      this.cartService.cart$,
-      this.cartService.isCartLoading$,
-    ]).subscribe(([items, loading]) => {
-      this.isLoadingCart = loading;
-      this.cartItems = items;
-      items.forEach(item => {
-        const key = this.getItemKey(item);
-        if (!this.selectedKeys.has(key) && !this._initializedKeys.has(key)) {
-          this.selectedKeys.add(key);
-        }
-        this._initializedKeys.add(key);
-      });
-      this.cleanUpRemovedKeys();
-      this.rebuildShopGroups();
-    });
+    this.cartSub = combineLatest([this.cartService.cart$, this.cartService.isCartLoading$]).subscribe(
+      ([items, loading]) => {
+        this.isLoadingCart = loading;
+        this.cartItems = items;
+        items.forEach((item) => {
+          const key = this.getItemKey(item);
+          if (!this.selectedKeys.has(key) && !this._initializedKeys.has(key)) {
+            this.selectedKeys.add(key);
+          }
+          this._initializedKeys.add(key);
+        });
+        this.cleanUpRemovedKeys();
+        this.rebuildShopGroups();
+      },
+    );
   }
 
   private fetchAddresses(): void {
@@ -85,7 +97,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
         this.addresses = list;
         this.isLoadingAddresses = false;
         if (!this.selectedAddressId && list.length > 0) {
-          const def = list.find(a => a.isDefault) ?? list[0];
+          const def = list.find((a) => a.isDefault) ?? list[0];
           this.selectedAddressId = def.id;
         }
       },
@@ -100,7 +112,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   private cleanUpRemovedKeys(): void {
-    const currentKeys = new Set(this.cartItems.map(i => this.getItemKey(i)));
+    const currentKeys = new Set(this.cartItems.map((i) => this.getItemKey(i)));
     for (const key of this.selectedKeys) {
       if (!currentKeys.has(key)) this.selectedKeys.delete(key);
     }
@@ -111,6 +123,16 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.cartSub.unsubscribe();
+  }
+
+  readonly trackById = trackById;
+
+  // The cart row has no id of its own until the server gives it one, so the product and the
+  // chosen option identify it
+  trackByItemKey = (_index: number, item: CartItem): string => this.getItemKey(item);
+
+  trackByShopId(_index: number, group: ShopGroup): string {
+    return group.shopId;
   }
 
   getItemKey(item: CartItem): string {
@@ -148,11 +170,11 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   isShopAllSelected(group: ShopGroup): boolean {
-    return group.items.every(item => this.selectedKeys.has(this.getItemKey(item)));
+    return group.items.every((item) => this.selectedKeys.has(this.getItemKey(item)));
   }
 
   isShopIndeterminate(group: ShopGroup): boolean {
-    const count = group.items.filter(item => this.selectedKeys.has(this.getItemKey(item))).length;
+    const count = group.items.filter((item) => this.selectedKeys.has(this.getItemKey(item))).length;
     return count > 0 && count < group.items.length;
   }
 
@@ -169,7 +191,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   get selectedItems(): CartItem[] {
-    return this.cartItems.filter(item => this.selectedKeys.has(this.getItemKey(item)));
+    return this.cartItems.filter((item) => this.selectedKeys.has(this.getItemKey(item)));
   }
 
   get selectedTotal(): number {
@@ -180,13 +202,21 @@ export class CartPageComponent implements OnInit, OnDestroy {
     return this.selectedItems.reduce((count, item) => count + item.quantity, 0);
   }
 
-  get cartTotal(): number { return this.selectedTotal; }
-  get cartCount(): number { return this.selectedCount; }
-  get discountAmount(): number { return this.cartTotal * this.appliedDiscount; }
-  get cartTotalAfterDiscount(): number { return this.cartTotal - this.discountAmount; }
+  get cartTotal(): number {
+    return this.selectedTotal;
+  }
+  get cartCount(): number {
+    return this.selectedCount;
+  }
+  get discountAmount(): number {
+    return this.cartTotal * this.appliedDiscount;
+  }
+  get cartTotalAfterDiscount(): number {
+    return this.cartTotal - this.discountAmount;
+  }
 
   get selectedAddress(): AddressEntry | undefined {
-    return this.addresses.find(a => a.id === this.selectedAddressId);
+    return this.addresses.find((a) => a.id === this.selectedAddressId);
   }
 
   getItemPrice(item: CartItem): number {
@@ -206,7 +236,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
     if (quantity > maxStock) {
       this.notificationService.warning(
         `Only ${maxStock} ${maxStock === 1 ? 'item' : 'items'} available in stock. Quantity cannot exceed the available stock.`,
-        'Stock Limit Reached'
+        'Stock Limit Reached',
       );
       return;
     }
@@ -266,7 +296,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
     // The server charges for the cart rows themselves, so it is sent their ids, not prices
     const cartItemIds = this.selectedItems
-      .map(item => item.cartItemId)
+      .map((item) => item.cartItemId)
       .filter((id): id is number => id !== undefined);
 
     if (cartItemIds.length === 0) {
@@ -280,7 +310,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
         this.cartService.fetchCart();
         this.isCheckingOut = false;
         this.notificationService.success('Order placed successfully!', 'Thank You');
-        this.router.navigate(['/cart/confirmation']);
+        void this.router.navigate(['/cart/confirmation']);
       },
       error: (err: Error) => {
         this.isCheckingOut = false;

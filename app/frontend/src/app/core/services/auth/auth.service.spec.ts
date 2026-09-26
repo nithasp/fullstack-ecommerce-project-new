@@ -1,8 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 import { AuthService } from './auth.service';
@@ -36,12 +33,7 @@ describe('AuthService', () => {
     localStorage.clear();
 
     TestBed.configureTestingModule({
-      providers: [
-        AuthService,
-        AuthApiService,
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [AuthService, AuthApiService, provideHttpClient(), provideHttpClientTesting()],
     });
 
     service = TestBed.inject(AuthService);
@@ -98,7 +90,7 @@ describe('AuthService', () => {
         .expectOne(`${API}/register`)
         .flush(
           { status: 409, message: 'Username already exists', data: null, code: 'conflict' },
-          { status: 409, statusText: 'Conflict' }
+          { status: 409, statusText: 'Conflict' },
         );
 
       expect(errorReceived).toBeTrue();
@@ -140,7 +132,7 @@ describe('AuthService', () => {
         .expectOne(`${API}/login`)
         .flush(
           { status: 401, message: 'Invalid username or password', data: null, code: 'invalid_credentials' },
-          { status: 401, statusText: 'Unauthorized' }
+          { status: 401, statusText: 'Unauthorized' },
         );
 
       expect(errorReceived).toBeTrue();
@@ -197,8 +189,10 @@ describe('AuthService', () => {
       service.initializeAuth().subscribe();
       httpMock
         .expectOne(`${API}/refresh`)
-        .flush({ status: 401, message: 'Invalid or expired refresh token', data: null, code: 'token_invalid' },
-          { status: 401, statusText: 'Unauthorized' });
+        .flush(
+          { status: 401, message: 'Invalid or expired refresh token', data: null, code: 'token_invalid' },
+          { status: 401, statusText: 'Unauthorized' },
+        );
 
       expect(service.isLoggedIn).toBeFalse();
       expect(localStorage.getItem('currentUser')).toBeNull();
@@ -231,7 +225,7 @@ describe('AuthService', () => {
         .expectOne(`${API}/refresh`)
         .flush(
           { status: 401, message: 'Invalid or expired refresh token', data: null, code: 'token_invalid' },
-          { status: 401, statusText: 'Unauthorized' }
+          { status: 401, statusText: 'Unauthorized' },
         );
 
       expect(errorReceived).toBeTrue();

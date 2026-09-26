@@ -1,8 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs';
 import { Product } from '../models/product.model';
 import { ProductService } from '../services/product.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
+import { NotificationService } from '@core/services/ui/notification.service';
+import { trackById, trackByValue } from '@shared/utils/track-by';
 
 export const PRODUCT_PAGE_SIZE = 12;
 export const SEARCH_DEBOUNCE_MS = 300;
@@ -10,10 +11,13 @@ export const SEARCH_DEBOUNCE_MS = 300;
 @Component({
   selector: 'app-product-list',
   templateUrl: './product-list.component.html',
-  styleUrl: './product-list.component.scss'
+  styleUrl: './product-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductListComponent implements OnInit, OnDestroy {
   readonly pageSize = PRODUCT_PAGE_SIZE;
+  readonly trackById = trackById;
+  readonly trackByValue = trackByValue;
 
   products: Product[] = [];
   total = 0;
@@ -29,8 +33,9 @@ export class ProductListComponent implements OnInit, OnDestroy {
 
   constructor(
     private productService: ProductService,
-    private notificationService: NotificationService
-  ) { }
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   get hasMore(): boolean {
     return this.products.length < this.total;
@@ -39,15 +44,18 @@ export class ProductListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.subscriptions.add(
       this.productService.getCategories().subscribe({
-        next: (categories) => (this.categories = categories),
-        error: () => this.notificationService.error('Failed to load categories')
-      })
+        next: (categories) => {
+          this.categories = categories;
+          this.cdr.markForCheck();
+        },
+        error: () => this.notificationService.error('Failed to load categories'),
+      }),
     );
 
     this.subscriptions.add(
       this.searchTerms
         .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged())
-        .subscribe(() => this.fetchPage(0))
+        .subscribe(() => this.fetchPage(0)),
     );
 
     this.fetchPage(0);
@@ -74,25 +82,32 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.fetchPage(this.products.length);
   }
 
+  // OnPush: state that arrives from a request or a debounced filter, rather than from a
+  // template event, has to say so
   private fetchPage(offset: number): void {
+    this.cdr.markForCheck();
     this.pageRequest?.unsubscribe();
-    this.pageRequest = this.productService.getProducts({
-      limit: this.pageSize,
-      offset,
-      category: this.selectedCategory || undefined,
-      search: this.searchTerm.trim() || undefined,
-    }).subscribe({
-      next: (page) => {
-        this.products = offset === 0 ? page.items : [...this.products, ...page.items];
-        this.total = page.total;
-        this.isLoading = false;
-        this.isLoadingMore = false;
-      },
-      error: () => {
-        this.notificationService.error('Failed to load products');
-        this.isLoading = false;
-        this.isLoadingMore = false;
-      }
-    });
+    this.pageRequest = this.productService
+      .getProducts({
+        limit: this.pageSize,
+        offset,
+        category: this.selectedCategory || undefined,
+        search: this.searchTerm.trim() || undefined,
+      })
+      .subscribe({
+        next: (page) => {
+          this.products = offset === 0 ? page.items : [...this.products, ...page.items];
+          this.total = page.total;
+          this.isLoading = false;
+          this.isLoadingMore = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.notificationService.error('Failed to load products');
+          this.isLoading = false;
+          this.isLoadingMore = false;
+          this.cdr.markForCheck();
+        },
+      });
   }
 }

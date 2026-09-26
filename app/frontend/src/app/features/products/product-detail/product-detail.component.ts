@@ -4,16 +4,23 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { Product, ProductType } from '../models/product.model';
 import { ProductService } from '../services/product.service';
-import { CartService } from '../../../core/services/cart/cart.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
+import { CartService } from '@core/services/cart/cart.service';
+import { NotificationService } from '@core/services/ui/notification.service';
+import { trackByIndex, trackByValue } from '@shared/utils/track-by';
 
 @Component({
   selector: 'app-product-detail',
   templateUrl: './product-detail.component.html',
-  styleUrl: './product-detail.component.scss'
+  styleUrl: './product-detail.component.scss',
 })
 export class ProductDetailComponent implements OnInit, OnDestroy {
   product: Product | undefined;
+
+  readonly ratingStars: number[] = [1, 2, 3, 4, 5];
+  readonly trackByValue = trackByValue;
+  // ProductType._id and Review._id are both optional, so position is the only stable key
+  readonly trackByIndex = trackByIndex;
+
   selectedQuantity = 1;
   selectedType: ProductType | undefined;
   selectedImage = '';
@@ -29,7 +36,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     private router: Router,
     private productService: ProductService,
     public cartService: CartService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
   ) {}
 
   ngOnInit(): void {
@@ -47,7 +54,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
         error: () => {
           this.notificationService.error('Failed to load product details');
           this.loading = false;
-        }
+        },
       });
     }
 
@@ -59,10 +66,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
       this.cartService.syncToBackend(this.product, this.selectedType);
 
-      this.notificationService.success(
-        `${addedQty}x ${this.product.name} added to cart!`,
-        'Added to Cart'
-      );
+      this.notificationService.success(`${addedQty}x ${this.product.name} added to cart!`, 'Added to Cart');
     });
   }
 
@@ -89,10 +93,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   addToCart(): void {
     if (!this.product) return;
 
-    const existingItem = this.cartService.getItems().find(
-      item => item.product.id === this.product!.id &&
-              item.selectedType?._id === this.selectedType?._id
-    );
+    const existingItem = this.cartService
+      .getItems()
+      .find(
+        (item) => item.product.id === this.product!.id && item.selectedType?._id === this.selectedType?._id,
+      );
     const currentCartQty = existingItem?.quantity ?? 0;
     const totalAfterAdd = currentCartQty + this.selectedQuantity;
 
@@ -101,12 +106,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       if (remaining <= 0) {
         this.notificationService.warning(
           `You already have the maximum available stock (${this.currentStock}) in your cart.`,
-          'Stock Limit Reached'
+          'Stock Limit Reached',
         );
       } else {
         this.notificationService.warning(
           `Cannot add ${this.selectedQuantity}. Only ${remaining} more ${remaining === 1 ? 'item' : 'items'} can be added (stock: ${this.currentStock}).`,
-          'Stock Limit Reached'
+          'Stock Limit Reached',
         );
       }
       return;
@@ -120,7 +125,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/products']);
+    void this.router.navigate(['/products']);
   }
 
   get isAdding(): boolean {
@@ -137,9 +142,5 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   get isQuantityAtLimit(): boolean {
     return this.currentStock > 0 && this.selectedQuantity >= this.currentStock;
-  }
-
-  get ratingStars(): number[] {
-    return Array(5).fill(0).map((_, i) => i + 1);
   }
 }

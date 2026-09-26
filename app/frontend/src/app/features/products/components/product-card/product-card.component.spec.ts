@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProductCardComponent } from './product-card.component';
-import { TruncatePipe } from '../../../../shared/pipes/truncate.pipe';
+import { TruncatePipe } from '@shared/pipes/truncate.pipe';
 import { Product } from '../../models/product.model';
 
 describe('ProductCardComponent', () => {
@@ -23,17 +23,17 @@ describe('ProductCardComponent', () => {
         quantity: 50,
         price: 79.99,
         stock: 50,
-        image: 'https://example.com/img.jpg'
-      }
+        image: 'https://example.com/img.jpg',
+      },
     ],
     reviews: [{ star: 5, comment: 'Great!' }],
-    overallRating: 4.5
+    overallRating: 4.5,
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [RouterTestingModule],
-      declarations: [ProductCardComponent, TruncatePipe]
+      declarations: [ProductCardComponent, TruncatePipe],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductCardComponent);

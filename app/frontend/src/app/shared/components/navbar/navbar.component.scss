@@ -2,13 +2,25 @@
 @import 'mixins';
 
 @keyframes menuDropDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes menuRetractUp {
-  from { opacity: 1; transform: translateY(0); }
-  to   { opacity: 0; transform: translateY(-10px); }
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 
 .navbar {
@@ -37,7 +49,9 @@
     transition: color $transition-fast;
     z-index: 210;
 
-    &:hover { color: $color-primary; }
+    &:hover {
+      color: $color-primary;
+    }
   }
 
   &__logo {
@@ -56,7 +70,9 @@
     cursor: pointer;
     padding: $spacing-sm;
     z-index: 210;
-    transition: border-color $transition-fast, background $transition-fast;
+    transition:
+      border-color $transition-fast,
+      background $transition-fast;
 
     &:hover {
       background: $color-primary-bg;
@@ -69,7 +85,10 @@
       background: $color-text;
       border-radius: 2px;
       transform-origin: center;
-      transition: transform $transition-base, opacity $transition-base, background $transition-base;
+      transition:
+        transform $transition-base,
+        opacity $transition-base,
+        background $transition-base;
     }
 
     &--active {
@@ -89,7 +108,9 @@
       }
     }
 
-    @include respond-to(md) { display: none; }
+    @include respond-to(md) {
+      display: none;
+    }
   }
 
   &__backdrop {
@@ -127,9 +148,13 @@
     z-index: 200;
     animation: menuDropDown 0.22s ease both;
 
-    &--open { display: flex; }
+    &--open {
+      display: flex;
+    }
 
-    &--closing { animation: menuRetractUp 0.2s ease forwards; }
+    &--closing {
+      animation: menuRetractUp 0.2s ease forwards;
+    }
 
     @include respond-to(md) {
       display: flex;
@@ -155,7 +180,9 @@
     color: $color-text-light;
     text-decoration: none;
     border-radius: 0;
-    transition: color $transition-fast, background $transition-fast;
+    transition:
+      color $transition-fast,
+      background $transition-fast;
     min-height: 52px;
 
     &:hover {
@@ -182,7 +209,9 @@
 
       @include respond-to(md) {
         border-radius: $border-radius-md;
-        &::after { display: none; }
+        &::after {
+          display: none;
+        }
       }
     }
 
@@ -200,11 +229,15 @@
     flex-shrink: 0;
     opacity: 0.7;
 
-    @include respond-to(md) { display: none; }
+    @include respond-to(md) {
+      display: none;
+    }
   }
 
   &__cart-link {
-    @include respond-to(md) { gap: 0; }
+    @include respond-to(md) {
+      gap: 0;
+    }
   }
 
   &__cart-icon-wrap {
@@ -226,7 +259,9 @@
 
   &__cart-label {
     display: inline;
-    @include respond-to(md) { display: none; }
+    @include respond-to(md) {
+      display: none;
+    }
   }
 
   &__auth-btn {
@@ -241,8 +276,13 @@
       color: white;
       box-shadow: inset 0 -2px 0 0 white;
 
-      &::after { display: none; }
-      &:hover { background: #1d4ed8; color: white; }
+      &::after {
+        display: none;
+      }
+      &:hover {
+        background: #1d4ed8;
+        color: white;
+      }
     }
   }
 
@@ -265,7 +305,10 @@
     font-weight: $font-weight-medium;
     color: $color-text-light;
     padding: $spacing-xs $spacing-sm;
-    transition: color $transition-fast, background $transition-fast, border-color $transition-fast;
+    transition:
+      color $transition-fast,
+      background $transition-fast,
+      border-color $transition-fast;
 
     &:hover,
     .navbar__user-menu--open & {
@@ -287,7 +330,10 @@
     flex-shrink: 0;
     color: $color-primary;
 
-    svg { width: 16px; height: 16px; }
+    svg {
+      width: 16px;
+      height: 16px;
+    }
   }
 
   &__username {
@@ -296,7 +342,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    @media (max-width: 360px) { display: none; }
+    @media (max-width: 360px) {
+      display: none;
+    }
   }
 
   &__user-chevron {
@@ -305,7 +353,9 @@
     flex-shrink: 0;
     transition: transform $transition-fast;
 
-    &--up { transform: rotate(180deg); }
+    &--up {
+      transform: rotate(180deg);
+    }
   }
 
   &__user-dropdown {
@@ -346,13 +396,22 @@
     font-size: $font-size-sm;
     font-weight: $font-weight-medium;
     text-align: left;
-    transition: color $transition-fast, background $transition-fast;
+    transition:
+      color $transition-fast,
+      background $transition-fast;
 
-    svg { width: 16px; height: 16px; flex-shrink: 0; }
+    svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
 
     &--logout {
       color: $color-error;
-      &:hover { color: darken($color-error, 10%); background: $color-error-bg; }
+      &:hover {
+        color: darken($color-error, 10%);
+        background: $color-error-bg;
+      }
     }
   }
 
@@ -373,6 +432,9 @@
     animation: scaleIn 0.3s ease;
     border: 2px solid $color-bg-white;
 
-    @include respond-to(md) { top: -4px; right: -6px; }
+    @include respond-to(md) {
+      top: -4px;
+      right: -6px;
+    }
   }
 }

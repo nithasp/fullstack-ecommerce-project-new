@@ -30,7 +30,14 @@ describe('PageViewService', () => {
         ]),
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: AuthService, useValue: { get isLoggedIn() { return isLoggedIn; } } },
+        {
+          provide: AuthService,
+          useValue: {
+            get isLoggedIn() {
+              return isLoggedIn;
+            },
+          },
+        },
       ],
     });
     router = TestBed.inject(Router);

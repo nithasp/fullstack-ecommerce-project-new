@@ -1,120 +1,74 @@
+import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InputFieldComponent } from './input-field.component';
 
+// The component reads its state from the control it is bound to, so the tests drive a real one
+@Component({
+  template: `
+    <form [formGroup]="form">
+      <app-input-field
+        #field
+        name="username"
+        [label]="label"
+        [type]="type"
+        [errorMessages]="errorMessages"
+        formControlName="username"
+      ></app-input-field>
+    </form>
+  `,
+})
+class HostComponent {
+  @ViewChild('field') field!: InputFieldComponent;
+  label = 'Username';
+  type = 'text';
+  errorMessages: Record<string, string> = {};
+  control = new FormControl('', { nonNullable: true });
+  form = new FormGroup({ username: this.control });
+}
+
 describe('InputFieldComponent', () => {
+  let fixture: ComponentFixture<HostComponent>;
+  let host: HostComponent;
   let component: InputFieldComponent;
-  let fixture: ComponentFixture<InputFieldComponent>;
+
+  const query = (selector: string): HTMLElement => fixture.nativeElement.querySelector(selector);
+  const input = (): HTMLInputElement => query('.input-field__input') as HTMLInputElement;
+  const toggle = (): HTMLButtonElement => query('.input-field__toggle') as HTMLButtonElement;
+  const errorText = (): string | null => query('.input-field__error-msg')?.textContent ?? null;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FormsModule],
-      declarations: [InputFieldComponent]
+      imports: [ReactiveFormsModule],
+      declarations: [InputFieldComponent, HostComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(InputFieldComponent);
-    component = fixture.componentInstance;
+    fixture = TestBed.createComponent(HostComponent);
+    host = fixture.componentInstance;
     fixture.detectChanges();
+    component = host.field;
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should initialize with empty value', () => {
-    expect(component.value).toBe('');
-    expect(component.touched).toBeFalse();
-    expect(component.disabled).toBeFalse();
+  it('should register itself as the control value accessor', () => {
+    host.control.setValue('from the model');
+    fixture.detectChanges();
+    expect(component.value).toBe('from the model');
+    expect(input().value).toBe('from the model');
   });
 
-  it('should update value on input', () => {
-    component.onInput('Hello');
-    expect(component.value).toBe('Hello');
+  it('should write typed text back to the control', () => {
+    component.onInput('typed');
+    expect(host.control.value).toBe('typed');
   });
 
-  it('should emit valueChanged on input', () => {
-    spyOn(component.valueChanged, 'emit');
-    component.onInput('Test');
-    expect(component.valueChanged.emit).toHaveBeenCalledWith('Test');
-  });
-
-  it('should set touched on blur', () => {
-    expect(component.touched).toBeFalse();
+  it('should mark the control touched on blur', () => {
+    expect(host.control.touched).toBeFalse();
     component.onBlur();
-    expect(component.touched).toBeTrue();
-  });
-
-  it('should show required error when field is required and empty', () => {
-    component.required = true;
-    component.label = 'Name';
-    component.value = '';
-    component.touched = true;
-    expect(component.errors.length).toBeGreaterThan(0);
-    expect(component.errors[0]).toContain('required');
-    expect(component.showErrors).toBeTrue();
-  });
-
-  it('should show minLength error when value is too short', () => {
-    component.minLength = 5;
-    component.label = 'Name';
-    component.value = 'Hi';
-    component.touched = true;
-    expect(component.errors.length).toBeGreaterThan(0);
-    expect(component.errors[0]).toContain('at least 5 characters');
-  });
-
-  it('should show maxLength error when value is too long', () => {
-    component.maxLength = 3;
-    component.label = 'Code';
-    component.value = 'ABCDEF';
-    component.touched = true;
-    expect(component.errors.length).toBeGreaterThan(0);
-    expect(component.errors[0]).toContain('at most 3 characters');
-  });
-
-  it('should show pattern error when value does not match pattern', () => {
-    component.pattern = '^\\d+$';
-    component.label = 'Number';
-    component.value = 'abc';
-    component.touched = true;
-    expect(component.errors.length).toBeGreaterThan(0);
-    expect(component.errors[0]).toContain('format is invalid');
-  });
-
-  it('should show email error for invalid email', () => {
-    component.type = 'email';
-    component.label = 'Email';
-    component.value = 'notanemail';
-    component.touched = true;
-    expect(component.errors.length).toBeGreaterThan(0);
-    expect(component.errors[0]).toContain('valid email');
-  });
-
-  it('should pass validation for valid email', () => {
-    component.type = 'email';
-    component.label = 'Email';
-    component.value = 'test@example.com';
-    component.touched = true;
-    expect(component.errors.length).toBe(0);
-  });
-
-  it('should not show errors when not touched', () => {
-    component.required = true;
-    component.value = '';
-    expect(component.showErrors).toBeFalse();
-  });
-
-  it('should use custom error messages when provided', () => {
-    component.required = true;
-    component.label = 'Field';
-    component.errorMessages = { required: 'Please fill this in' };
-    component.value = '';
-    expect(component.errors[0]).toBe('Please fill this in');
-  });
-
-  it('should support writeValue from ControlValueAccessor', () => {
-    component.writeValue('initial');
-    expect(component.value).toBe('initial');
+    expect(host.control.touched).toBeTrue();
   });
 
   it('should handle null in writeValue', () => {
@@ -122,55 +76,135 @@ describe('InputFieldComponent', () => {
     expect(component.value).toBe('');
   });
 
-  it('should support setDisabledState', () => {
-    component.setDisabledState(true);
+  it('should disable alongside the control', () => {
+    host.control.disable();
+    fixture.detectChanges();
     expect(component.disabled).toBeTrue();
-    component.setDisabledState(false);
-    expect(component.disabled).toBeFalse();
+    expect(input().disabled).toBeTrue();
+  });
+
+  describe('errors', () => {
+    it('should report nothing while the control is valid', () => {
+      expect(component.errors).toEqual([]);
+      expect(component.showErrors).toBeFalse();
+    });
+
+    it('should describe a required error from the control', () => {
+      host.control.addValidators(Validators.required);
+      host.control.updateValueAndValidity();
+      host.control.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component.errors).toEqual(['Username is required']);
+      expect(component.showErrors).toBeTrue();
+      expect(errorText()).toContain('Username is required');
+    });
+
+    it('should describe a minlength error with the length the control asked for', () => {
+      host.control.addValidators(Validators.minLength(5));
+      host.control.setValue('Hi');
+      host.control.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component.errors).toEqual(['Username must be at least 5 characters']);
+    });
+
+    it('should describe a maxlength error with the length the control asked for', () => {
+      host.control.addValidators(Validators.maxLength(3));
+      host.control.setValue('ABCDEF');
+      host.control.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component.errors).toEqual(['Username must be at most 3 characters']);
+    });
+
+    it('should describe a pattern error', () => {
+      host.control.addValidators(Validators.pattern('^[0-9]+$'));
+      host.control.setValue('abc');
+      host.control.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component.errors).toEqual(['Username format is invalid']);
+    });
+
+    it('should describe an email error', () => {
+      host.control.addValidators(Validators.email);
+      host.control.setValue('notanemail');
+      host.control.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component.errors).toEqual(['Please enter a valid email']);
+    });
+
+    it('should stay quiet for a valid email', () => {
+      host.control.addValidators(Validators.email);
+      host.control.setValue('test@example.com');
+      host.control.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component.errors).toEqual([]);
+    });
+
+    it('should prefer a caller-supplied message over the default', () => {
+      host.errorMessages = { required: 'Please fill this in' };
+      host.control.addValidators(Validators.required);
+      host.control.updateValueAndValidity();
+      host.control.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component.errors).toEqual(['Please fill this in']);
+    });
+
+    it('should name a key it has no default for', () => {
+      host.control.setErrors({ mismatch: true });
+      host.control.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component.errors).toEqual(['Username is invalid']);
+    });
+
+    it('should hide errors until the control is touched', () => {
+      host.control.addValidators(Validators.required);
+      host.control.updateValueAndValidity();
+      fixture.detectChanges();
+
+      expect(component.errors.length).toBe(1);
+      expect(component.showErrors).toBeFalse();
+      expect(errorText()).toBeNull();
+    });
+  });
+
+  describe('required marker', () => {
+    it('should stay hidden when the control has no required rule', () => {
+      expect(component.isRequired).toBeFalse();
+      expect(query('.input-field__required')).toBeNull();
+    });
+
+    it('should follow the control rather than a separate input', () => {
+      host.control.addValidators(Validators.required);
+      host.control.updateValueAndValidity();
+      fixture.detectChanges();
+
+      expect(component.isRequired).toBeTrue();
+      expect(query('.input-field__required')).toBeTruthy();
+    });
   });
 
   it('should render label in template', () => {
-    component.label = 'Test Label';
-    component.name = 'test';
+    host.label = 'Test Label';
     fixture.detectChanges();
-    const label = fixture.nativeElement.querySelector('.input-field__label');
-    expect(label.textContent).toContain('Test Label');
-  });
-
-  it('should render error message in template when invalid', () => {
-    component.required = true;
-    component.label = 'Name';
-    component.name = 'name';
-    component.value = '';
-    component.touched = true;
-    fixture.detectChanges();
-    const error = fixture.nativeElement.querySelector('.input-field__error-msg');
-    expect(error).toBeTruthy();
-    expect(error.textContent).toContain('required');
-  });
-
-  it('should report an extraError alongside its own rules', () => {
-    component.extraError = 'Passwords do not match';
-    component.touched = true;
-    expect(component.errors).toContain('Passwords do not match');
-    expect(component.showErrors).toBeTrue();
+    expect(query('.input-field__label').textContent).toContain('Test Label');
   });
 
   describe('password toggle', () => {
-    const toggle = (): HTMLButtonElement =>
-      fixture.nativeElement.querySelector('.input-field__toggle');
-    const input = (): HTMLInputElement =>
-      fixture.nativeElement.querySelector('.input-field__input');
-
     beforeEach(() => {
-      component.type = 'password';
-      component.name = 'password';
+      host.type = 'password';
       fixture.detectChanges();
     });
 
     it('should only offer the toggle on a password field', () => {
       expect(toggle()).toBeTruthy();
-      component.type = 'text';
+      host.type = 'text';
       fixture.detectChanges();
       expect(toggle()).toBeNull();
     });
@@ -219,17 +253,16 @@ describe('InputFieldComponent', () => {
     });
 
     it('should swap the eye for the struck-through eye when revealed', () => {
-      expect(fixture.nativeElement.querySelector('.input-field__toggle svg line')).toBeNull();
+      expect(query('.input-field__toggle svg line')).toBeNull();
       component.passwordShown = true;
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.input-field__toggle svg line')).toBeTruthy();
+      expect(query('.input-field__toggle svg line')).toBeTruthy();
     });
 
     it('should disable alongside the input', () => {
-      component.setDisabledState(true);
+      host.control.disable();
       fixture.detectChanges();
       expect(toggle().disabled).toBeTrue();
     });
   });
-
 });

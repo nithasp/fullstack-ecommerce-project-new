@@ -2,6 +2,8 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  HostListener,
+  inject,
   Input,
   OnChanges,
   OnDestroy,
@@ -9,15 +11,18 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import { AddressDialogMode, AddressEntry, AddressForm } from '../../../models/address.model';
-import { NotificationService } from '../../../../../core/services/ui/notification.service';
+import { FormBuilder, Validators } from '@angular/forms';
+import { AddressDialogMode, AddressEntry, AddressLabel } from '../../../models/address.model';
+import { notBlank } from '@shared/validators/not-blank.validator';
+import { trackById } from '@shared/utils/track-by';
+import { NotificationService } from '@core/services/ui/notification.service';
 import { AddressApiService } from '../../../services/address-api.service';
-import { ConfirmDialogService } from '../../../../../core/services/ui/confirm-dialog.service';
+import { ConfirmDialogService } from '@core/services/ui/confirm-dialog.service';
 
 @Component({
   selector: 'app-address-dialog',
   templateUrl: './address-dialog.component.html',
-  styleUrl: './address-dialog.component.scss'
+  styleUrl: './address-dialog.component.scss',
 })
 export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
   @Input() selectedAddressId: number | null = null;
@@ -27,15 +32,28 @@ export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
   @Output() closed = new EventEmitter<void>();
 
   addresses: AddressEntry[] = [];
+
+  readonly trackById = trackById;
   isLoadingAddresses = false;
   isSaving = false;
   isDeleting = false;
 
   dialogMode: AddressDialogMode = 'list';
   editingAddressId: number | null = null;
-  addressForm: AddressForm = this.blankForm();
-  formSubmitted = false;
   closing = false;
+
+  // Field-level inject(), because `target: ES2022` initializes class fields before the
+  // constructor body runs and `form` reads `fb` as it is declared
+  private readonly fb = inject(FormBuilder);
+
+  readonly form = this.fb.nonNullable.group({
+    fullName: ['', [Validators.required, notBlank]],
+    phone: [''],
+    address: ['', [Validators.required, notBlank]],
+    city: ['', [Validators.required, notBlank]],
+    isDefault: [false],
+    label: ['home' as AddressLabel],
+  });
 
   localSelectedId: number | null = null;
 
@@ -43,7 +61,7 @@ export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
     private elementRef: ElementRef<HTMLElement>,
     private notificationService: NotificationService,
     private addressApi: AddressApiService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
   ) {}
 
   ngOnInit(): void {
@@ -64,8 +82,7 @@ export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
     }
     this.dialogMode = 'list';
     this.editingAddressId = null;
-    this.addressForm = this.blankForm();
-    this.formSubmitted = false;
+    this.form.reset();
   }
 
   private loadAddresses(emitChange = false): void {
@@ -75,7 +92,7 @@ export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
         this.addresses = list;
         this.isLoadingAddresses = false;
         if (!this.localSelectedId && list.length > 0) {
-          const def = list.find(a => a.isDefault) ?? list[0];
+          const def = list.find((a) => a.isDefault) ?? list[0];
           this.localSelectedId = def.id;
         }
         if (emitChange) {
@@ -90,37 +107,44 @@ export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   openAddMode(): void {
-    this.formSubmitted = false;
-    this.addressForm = this.blankForm();
+    this.form.reset();
     this.editingAddressId = null;
     this.dialogMode = 'add';
   }
 
   openEditMode(address: AddressEntry, event: Event): void {
     event.preventDefault();
-    this.formSubmitted = false;
     this.editingAddressId = address.id;
-    this.addressForm = {
+    this.form.reset({
       fullName: address.fullName,
       phone: address.phone ?? '',
       address: address.address,
       city: address.city,
       isDefault: address.isDefault,
       label: address.label,
-    };
+    });
     this.dialogMode = 'edit';
   }
 
   backToList(): void {
-    this.formSubmitted = false;
+    this.form.reset();
     this.editingAddressId = null;
-    this.addressForm = this.blankForm();
     this.dialogMode = 'list';
   }
 
   close(): void {
     if (this.closing) return;
     this.closing = true;
+  }
+
+  // Dismissing has to be reachable from the keyboard, not only by clicking the backdrop
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.dialogMode === 'list') {
+      this.close();
+    } else {
+      this.backToList();
+    }
   }
 
   onOverlayAnimationDone(event: AnimationEvent): void {
@@ -138,8 +162,8 @@ export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
     this.localSelectedId = id;
   }
 
-  setLabel(label: 'home' | 'work' | 'other'): void {
-    this.addressForm.label = label;
+  setLabel(label: AddressLabel): void {
+    this.form.controls.label.setValue(label);
   }
 
   promptDelete(address: AddressEntry, event: Event): void {
@@ -148,51 +172,50 @@ export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
       this.notificationService.error('You must keep at least one address.');
       return;
     }
-    this.confirmDialog.confirm({
-      title: 'Delete Address',
-      message: `Remove "${address.fullName} — ${address.address}, ${address.city}"? This action cannot be undone.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      danger: true,
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-      this.isDeleting = true;
-      this.addressApi.deleteAddress(address.id).subscribe({
-        next: () => {
-          this.isDeleting = false;
-          if (this.localSelectedId === address.id) {
-            const remaining = this.addresses.filter(a => a.id !== address.id);
-            const fallback = remaining.find(a => a.isDefault) ?? remaining[0];
-            this.localSelectedId = fallback?.id ?? null;
-          }
-          this.notificationService.info('Address removed.');
-          this.loadAddresses(true);
-        },
-        error: () => {
-          this.isDeleting = false;
-          this.notificationService.error('Failed to delete address. Please try again.');
-        },
+    this.confirmDialog
+      .confirm({
+        title: 'Delete Address',
+        message: `Remove "${address.fullName} — ${address.address}, ${address.city}"? This action cannot be undone.`,
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        danger: true,
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.isDeleting = true;
+        this.addressApi.deleteAddress(address.id).subscribe({
+          next: () => {
+            this.isDeleting = false;
+            if (this.localSelectedId === address.id) {
+              const remaining = this.addresses.filter((a) => a.id !== address.id);
+              const fallback = remaining.find((a) => a.isDefault) ?? remaining[0];
+              this.localSelectedId = fallback?.id ?? null;
+            }
+            this.notificationService.info('Address removed.');
+            this.loadAddresses(true);
+          },
+          error: () => {
+            this.isDeleting = false;
+            this.notificationService.error('Failed to delete address. Please try again.');
+          },
+        });
       });
-    });
   }
 
   saveAddress(): void {
-    this.formSubmitted = true;
-    if (
-      !this.addressForm.fullName.trim() ||
-      !this.addressForm.address.trim() ||
-      !this.addressForm.city.trim()
-    ) {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
       return;
     }
 
     this.isSaving = true;
+    const payload = this.form.getRawValue();
 
     if (this.dialogMode === 'edit' && this.editingAddressId !== null) {
-      this.addressApi.updateAddress(this.editingAddressId, this.addressForm).subscribe({
+      this.addressApi.updateAddress(this.editingAddressId, payload).subscribe({
         next: (updated) => {
           this.isSaving = false;
-          const idx = this.addresses.findIndex(a => a.id === this.editingAddressId);
+          const idx = this.addresses.findIndex((a) => a.id === this.editingAddressId);
           if (idx !== -1) this.addresses[idx] = updated;
           this.notificationService.success('Address updated!');
           this.backToList();
@@ -204,7 +227,7 @@ export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
         },
       });
     } else {
-      this.addressApi.createAddress(this.addressForm).subscribe({
+      this.addressApi.createAddress(payload).subscribe({
         next: (created) => {
           this.isSaving = false;
           this.localSelectedId = created.id;
@@ -218,9 +241,5 @@ export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
         },
       });
     }
-  }
-
-  private blankForm(): AddressForm {
-    return { fullName: '', phone: '', address: '', city: '', isDefault: false, label: 'home' };
   }
 }

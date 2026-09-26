@@ -1,11 +1,12 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { debounceTime, Subject, Subscription } from 'rxjs';
 import { AUDIT_ACTIONS, AuditAction, AuditLog, AuditLogQuery, AuditResult } from '../models/audit-log.model';
 import { AuditLogApiService } from '../services/audit-log-api.service';
-import { NotificationService } from '../../../core/services/ui/notification.service';
+import { localDayStart, USER_FILTER_DEBOUNCE_MS } from '../utils/admin-filters';
+import { trackById, trackByValue } from '@shared/utils/track-by';
+import { NotificationService } from '@core/services/ui/notification.service';
 
 export const ACTIVITY_PAGE_SIZE = 25;
-export const USER_FILTER_DEBOUNCE_MS = 300;
 
 export interface ActivityFilters {
   user: string;
@@ -19,19 +20,19 @@ export interface ActivityFilters {
 export type TypeToggle = 'showApiReads';
 
 const NO_FILTERS: ActivityFilters = {
-  user: '', action: '', result: '', from: '', to: '', showApiReads: false,
+  user: '',
+  action: '',
+  result: '',
+  from: '',
+  to: '',
+  showApiReads: false,
 };
-
-function localDayStart(date: string, addDays = 0): string {
-  const day = new Date(`${date}T00:00:00`);
-  day.setDate(day.getDate() + addDays);
-  return day.toISOString();
-}
 
 @Component({
   selector: 'app-activity-log',
   templateUrl: './activity-log.component.html',
-  styleUrl: './activity-log.component.scss'
+  styleUrl: './activity-log.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActivityLogComponent implements OnInit, OnDestroy {
   readonly pageSize = ACTIVITY_PAGE_SIZE;
@@ -41,6 +42,9 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
   offset = 0;
   isLoading = true;
   filters: ActivityFilters = { ...NO_FILTERS };
+
+  readonly trackById = trackById;
+  readonly trackByValue = trackByValue;
   expandedId: number | null = null;
 
   private readonly userTerms = new Subject<string>();
@@ -49,12 +53,13 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
 
   constructor(
     private auditLogApi: AuditLogApiService,
-    private notificationService: NotificationService
-  ) { }
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   get actionOptions(): AuditAction[] {
     const { showApiReads } = this.filters;
-    return AUDIT_ACTIONS.filter(action => action !== 'READ' || showApiReads);
+    return AUDIT_ACTIONS.filter((action) => action !== 'READ' || showApiReads);
   }
 
   get hasFilters(): boolean {
@@ -80,7 +85,7 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscriptions.add(
-      this.userTerms.pipe(debounceTime(USER_FILTER_DEBOUNCE_MS)).subscribe(() => this.fetchPage(0))
+      this.userTerms.pipe(debounceTime(USER_FILTER_DEBOUNCE_MS)).subscribe(() => this.fetchPage(0)),
     );
 
     this.fetchPage(0);
@@ -133,12 +138,19 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
     return (log.statusCode ?? 0) >= 400;
   }
 
+  trackByDetail(_index: number, detail: { key: string }): string {
+    return detail.key;
+  }
+
   detailText(value: string | number | boolean | string[]): string {
     return Array.isArray(value) ? value.join(', ') : String(value);
   }
 
+  // OnPush: state that arrives from a request or a debounced filter, rather than from a
+  // template event, has to say so
   private fetchPage(offset: number): void {
     this.isLoading = true;
+    this.cdr.markForCheck();
     this.pageRequest?.unsubscribe();
     this.pageRequest = this.auditLogApi.getAuditLogs(this.buildQuery(offset)).subscribe({
       next: (page) => {
@@ -147,11 +159,13 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
         this.offset = offset;
         this.expandedId = null;
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.notificationService.error('Failed to load the activity log');
         this.isLoading = false;
-      }
+        this.cdr.markForCheck();
+      },
     });
   }
 

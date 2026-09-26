@@ -1,3 +1,5 @@
+export type AddressLabel = 'home' | 'work' | 'other';
+
 export interface AddressEntry {
   id: number;
   userId?: number;
@@ -6,7 +8,7 @@ export interface AddressEntry {
   address: string;
   city: string;
   isDefault: boolean;
-  label: 'home' | 'work' | 'other';
+  label: AddressLabel;
 }
 
 export interface AddressForm {
@@ -15,7 +17,7 @@ export interface AddressForm {
   address: string;
   city: string;
   isDefault: boolean;
-  label: 'home' | 'work' | 'other';
+  label: AddressLabel;
 }
 
 export type AddressDialogMode = 'list' | 'add' | 'edit';

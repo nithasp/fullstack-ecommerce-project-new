@@ -8,7 +8,7 @@ export const guestGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return authService.authInitialized$.pipe(
-    filter(initialized => initialized),
+    filter((initialized) => initialized),
     take(1),
     switchMap(() => {
       if (authService.hasValidToken()) return of(router.createUrlTree(['/products']));
@@ -20,8 +20,8 @@ export const guestGuard: CanActivateFn = () => {
         catchError(() => {
           authService.clearSession();
           return of(true);
-        })
+        }),
       );
-    })
+    }),
   );
 };

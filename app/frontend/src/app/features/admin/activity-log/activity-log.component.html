@@ -1,90 +1,108 @@
-<div class="activity-log animate-fade-in">
-  <div class="activity-log__header">
+<div class="admin-log animate-fade-in">
+  <div class="admin-log__header">
     <div>
-      <h1 class="activity-log__title">Activity Log</h1>
-      <p class="activity-log__subtitle">Who did what, and when. Newest first.</p>
+      <h1 class="admin-log__title">Activity Log</h1>
+      <p class="admin-log__subtitle">Who did what, and when. Newest first.</p>
     </div>
-    <button type="button" class="activity-log__refresh" [disabled]="isLoading" (click)="refresh()">
+    <button type="button" class="admin-log__refresh" [disabled]="isLoading" (click)="refresh()">
       Refresh
     </button>
   </div>
 
-  <nav class="activity-log__tabs">
-    <a class="activity-log__tab" routerLink="/admin/activity" routerLinkActive="activity-log__tab--current">Activity log</a>
-    <a class="activity-log__tab" routerLink="/admin/page-views" routerLinkActive="activity-log__tab--current">Page views</a>
+  <nav class="admin-log__tabs">
+    <a class="admin-log__tab" routerLink="/admin/activity" routerLinkActive="admin-log__tab--current"
+      >Activity log</a
+    >
+    <a class="admin-log__tab" routerLink="/admin/page-views" routerLinkActive="admin-log__tab--current"
+      >Page views</a
+    >
   </nav>
 
-  <div class="activity-log__filters">
-    <label class="activity-log__field activity-log__field--wide">
-      <span class="activity-log__label">User</span>
+  <div class="admin-log__filters">
+    <label class="admin-log__field admin-log__field--wide">
+      <span class="admin-log__label">User</span>
       <input
         type="search"
-        class="activity-log__control"
+        class="admin-log__control"
         placeholder="User id or username"
         [ngModel]="filters.user"
         (ngModelChange)="onUserFilterChange($event)"
       />
     </label>
 
-    <label class="activity-log__field">
-      <span class="activity-log__label">Type</span>
-      <select class="activity-log__control" [ngModel]="filters.action" (ngModelChange)="setFilter('action', $event)">
+    <label class="admin-log__field">
+      <span class="admin-log__label">Type</span>
+      <select
+        class="admin-log__control"
+        [ngModel]="filters.action"
+        (ngModelChange)="setFilter('action', $event)"
+      >
         <option value="">All types</option>
-        <option *ngFor="let action of actionOptions" [value]="action">{{ action | humanize }}</option>
+        <option *ngFor="let action of actionOptions; trackBy: trackByValue" [value]="action">
+          {{ action | humanize }}
+        </option>
       </select>
     </label>
 
-    <label class="activity-log__field">
-      <span class="activity-log__label">Result</span>
-      <select class="activity-log__control" [ngModel]="filters.result" (ngModelChange)="setFilter('result', $event)">
+    <label class="admin-log__field">
+      <span class="admin-log__label">Result</span>
+      <select
+        class="admin-log__control"
+        [ngModel]="filters.result"
+        (ngModelChange)="setFilter('result', $event)"
+      >
         <option value="">All results</option>
         <option value="success">Success</option>
         <option value="failure">Failed</option>
       </select>
     </label>
 
-    <label class="activity-log__field">
-      <span class="activity-log__label">From</span>
+    <label class="admin-log__field">
+      <span class="admin-log__label">From</span>
       <input
         type="date"
-        class="activity-log__control"
+        class="admin-log__control"
         [attr.max]="filters.to || null"
         [ngModel]="filters.from"
         (ngModelChange)="setFilter('from', $event)"
       />
     </label>
 
-    <label class="activity-log__field">
-      <span class="activity-log__label">To</span>
+    <label class="admin-log__field">
+      <span class="admin-log__label">To</span>
       <input
         type="date"
-        class="activity-log__control"
+        class="admin-log__control"
         [attr.min]="filters.from || null"
         [ngModel]="filters.to"
         (ngModelChange)="setFilter('to', $event)"
       />
     </label>
 
-    <label class="activity-log__check" title="Admin views of account data">
-      <input type="checkbox" [ngModel]="filters.showApiReads" (ngModelChange)="setShown('showApiReads', $event)" />
+    <label class="admin-log__check" title="Admin views of account data">
+      <input
+        type="checkbox"
+        [ngModel]="filters.showApiReads"
+        (ngModelChange)="setShown('showApiReads', $event)"
+      />
       Show reads
     </label>
 
-    <button *ngIf="hasFilters" type="button" class="activity-log__clear" (click)="clearFilters()">
+    <button *ngIf="hasFilters" type="button" class="admin-log__clear" (click)="clearFilters()">
       Clear filters
     </button>
   </div>
 
-  <div *ngIf="isLoading && logs.length === 0" class="activity-log__loading">
+  <div *ngIf="isLoading && logs.length === 0" class="admin-log__loading">
     <app-loading-spinner message="Loading activity..." layout="block"></app-loading-spinner>
   </div>
 
-  <div *ngIf="!isLoading && logs.length === 0" class="activity-log__empty">
+  <div *ngIf="!isLoading && logs.length === 0" class="admin-log__empty">
     <p>No activity matches these filters.</p>
   </div>
 
-  <div *ngIf="logs.length > 0" class="activity-log__table-wrap" [class.activity-log__table-wrap--busy]="isLoading">
-    <table class="activity-log__table">
+  <div *ngIf="logs.length > 0" class="admin-log__table-wrap" [class.admin-log__table-wrap--busy]="isLoading">
+    <table class="admin-log__table">
       <thead>
         <tr>
           <th scope="col">Time</th>
@@ -93,60 +111,70 @@
           <th scope="col">Event</th>
           <th scope="col">Route</th>
           <th scope="col">Result</th>
-          <th scope="col"><span class="activity-log__sr-only">Details</span></th>
+          <th scope="col"><span class="admin-log__sr-only">Details</span></th>
         </tr>
       </thead>
       <tbody>
-        <ng-container *ngFor="let log of logs">
+        <ng-container *ngFor="let log of logs; trackBy: trackById">
           <tr
-            class="activity-log__row"
-            [class.activity-log__row--open]="expandedId === log.id"
+            class="admin-log__row"
+            [class.admin-log__row--open]="expandedId === log.id"
             (click)="toggleDetails(log.id)"
           >
-            <td class="activity-log__time">{{ log.createdAt | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
-            <td class="activity-log__user">
-              <span class="activity-log__user-id">{{ log.userId !== null ? '#' + log.userId : '—' }}</span>
+            <td class="admin-log__time">{{ log.createdAt | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+            <td class="admin-log__user">
+              <span class="admin-log__user-id">{{ log.userId !== null ? '#' + log.userId : '—' }}</span>
               {{ log.username ?? '—' }}
-              <span *ngIf="log.userRole === 'admin'" class="activity-log__role">admin</span>
+              <span *ngIf="log.userRole === 'admin'" class="admin-log__role">admin</span>
             </td>
             <td>
-              <span class="activity-log__badge activity-log__badge--{{ log.action | lowercase }}">
+              <span class="admin-log__badge admin-log__badge--{{ log.action | lowercase }}">
                 {{ log.action | humanize }}
               </span>
             </td>
             <td>{{ log.event | humanize }}</td>
-            <td class="activity-log__route" [title]="(log.method ?? '') + ' ' + (log.path ?? '')">
-              <span class="activity-log__method">{{ log.method }}</span> {{ log.path }}
+            <td class="admin-log__route" [title]="(log.method ?? '') + ' ' + (log.path ?? '')">
+              <span class="admin-log__method">{{ log.method }}</span> {{ log.path }}
             </td>
             <td>
-              <span class="activity-log__result" [class.activity-log__result--failed]="isFailure(log)">
+              <span class="admin-log__result" [class.admin-log__result--failed]="isFailure(log)">
                 {{ isFailure(log) ? '✗' : '✓' }} {{ log.statusCode }}
               </span>
             </td>
             <td>
               <button
                 type="button"
-                class="activity-log__toggle"
+                class="admin-log__toggle"
                 [attr.aria-expanded]="expandedId === log.id"
                 [attr.aria-label]="'Details of entry ' + log.id"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="6 9 12 15 18 9"/>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
             </td>
           </tr>
 
-          <tr *ngIf="expandedId === log.id" class="activity-log__details-row">
+          <tr *ngIf="expandedId === log.id" class="admin-log__details-row">
             <td colspan="7">
-              <dl class="activity-log__details">
+              <dl class="admin-log__details">
                 <dt>Event code</dt>
-                <dd><code>{{ log.event }}</code></dd>
+                <dd>
+                  <code>{{ log.event }}</code>
+                </dd>
                 <dt>IP address</dt>
                 <dd>{{ log.ipAddress ?? '—' }}</dd>
                 <dt>Browser</dt>
                 <dd>{{ log.userAgent ?? '—' }}</dd>
-                <ng-container *ngFor="let detail of log.details | keyvalue">
+                <ng-container *ngFor="let detail of log.details | keyvalue; trackBy: trackByDetail">
                   <dt>{{ detail.key }}</dt>
                   <dd>{{ detailText(detail.value) }}</dd>
                 </ng-container>
@@ -158,13 +186,23 @@
     </table>
   </div>
 
-  <div *ngIf="logs.length > 0" class="activity-log__pager">
-    <span class="activity-log__range">Showing {{ rangeStart }}–{{ rangeEnd }} of {{ total | number }}</span>
-    <div class="activity-log__pager-buttons">
-      <button type="button" class="activity-log__page-btn" [disabled]="!hasPrevious || isLoading" (click)="previousPage()">
+  <div *ngIf="logs.length > 0" class="admin-log__pager">
+    <span class="admin-log__range">Showing {{ rangeStart }}–{{ rangeEnd }} of {{ total | number }}</span>
+    <div class="admin-log__pager-buttons">
+      <button
+        type="button"
+        class="admin-log__page-btn"
+        [disabled]="!hasPrevious || isLoading"
+        (click)="previousPage()"
+      >
         Previous
       </button>
-      <button type="button" class="activity-log__page-btn" [disabled]="!hasNext || isLoading" (click)="nextPage()">
+      <button
+        type="button"
+        class="admin-log__page-btn"
+        [disabled]="!hasNext || isLoading"
+        (click)="nextPage()"
+      >
         Next
       </button>
     </div>

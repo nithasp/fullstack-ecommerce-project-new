@@ -8,13 +8,20 @@ import { AuthUser, UserRole } from '../models/auth.model';
 describe('adminGuard', () => {
   let currentUser: AuthUser | null;
 
-  const userWithRole = (role: UserRole): AuthUser =>
-    ({ id: 1, username: 'someone', firstName: 'Some', lastName: 'One', role });
+  const userWithRole = (role: UserRole): AuthUser => ({
+    id: 1,
+    username: 'someone',
+    firstName: 'Some',
+    lastName: 'One',
+    role,
+  });
 
   const runGuard = (): Promise<boolean | UrlTree> =>
-    firstValueFrom(TestBed.runInInjectionContext(() =>
-      adminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
-    ) as Observable<boolean | UrlTree>);
+    firstValueFrom(
+      TestBed.runInInjectionContext(() =>
+        adminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+      ) as Observable<boolean | UrlTree>,
+    );
 
   beforeEach(() => {
     currentUser = null;
