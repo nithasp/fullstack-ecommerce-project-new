@@ -277,7 +277,6 @@ export class CartPageComponent implements OnInit, OnDestroy {
     this.isCheckingOut = true;
     this.cartApi.checkout(cartItemIds, this.selectedAddress.id).subscribe({
       next: () => {
-        // Only the items that were paid for leave the cart, so the rest are read back
         this.cartService.fetchCart();
         this.isCheckingOut = false;
         this.notificationService.success('Order placed successfully!', 'Thank You');

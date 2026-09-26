@@ -22,7 +22,6 @@ import { NotificationService } from '../services/ui/notification.service';
 let isRefreshing = false;
 const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
-// Marks a background call (a page-view report) whose failure the user shouldn't be told about
 export const QUIET_ERRORS = new HttpContextToken<boolean>(() => false);
 
 function addToken(req: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
@@ -63,7 +62,6 @@ function handleError(
   router: Router,
   notification: NotificationService
 ) {
-  // A background call fails without a toast; an expired token is still refreshed for it
   if (req.context.get(QUIET_ERRORS) && error.error?.code !== 'token_expired') {
     return throwError(() => new Error(extractMessage(error)));
   }

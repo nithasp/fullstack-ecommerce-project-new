@@ -8,15 +8,14 @@ export const PAGE_VIEWS_PAGE_SIZE = 25;
 export const USER_FILTER_DEBOUNCE_MS = 300;
 
 export interface PageViewFilters {
-  user: string; // a user id, or part of a username
+  user: string;
   path: string;
-  from: string; // yyyy-MM-dd, as a date input gives it
+  from: string;
   to: string;
 }
 
 const NO_FILTERS: PageViewFilters = { user: '', path: '', from: '', to: '' };
 
-// The moment a local day starts, as ISO 8601; `addDays` moves it forward
 function localDayStart(date: string, addDays = 0): string {
   const day = new Date(`${date}T00:00:00`);
   day.setDate(day.getDate() + addDays);
@@ -69,7 +68,6 @@ export class PageViewsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Typing only reaches the server once the admin pauses
     this.subscriptions.add(
       this.filterTerms.pipe(debounceTime(USER_FILTER_DEBOUNCE_MS)).subscribe(() => this.fetchPage(0))
     );
@@ -113,7 +111,6 @@ export class PageViewsComponent implements OnInit, OnDestroy {
     this.expandedId = this.expandedId === id ? null : id;
   }
 
-  // A request still in flight is dropped, so a slow old response can't overwrite a newer one
   private fetchPage(offset: number): void {
     this.isLoading = true;
     this.pageRequest?.unsubscribe();
@@ -135,7 +132,6 @@ export class PageViewsComponent implements OnInit, OnDestroy {
   private buildQuery(offset: number): PageViewQuery {
     const { user, path, from, to } = this.filters;
     const term = user.trim();
-    // A whole number is taken as a user id; any other text is matched against usernames
     const isUserId = /^\d+$/.test(term);
 
     return {

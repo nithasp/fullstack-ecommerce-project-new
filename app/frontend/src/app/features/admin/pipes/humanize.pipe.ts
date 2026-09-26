@@ -1,6 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-// Makes a code readable: 'cart.item_added' → 'Cart item added', 'LOGIN_FAILED' → 'LOGIN FAILED'
 @Pipe({
   name: 'humanize'
 })

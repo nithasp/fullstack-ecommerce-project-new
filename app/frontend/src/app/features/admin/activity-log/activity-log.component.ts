@@ -8,22 +8,20 @@ export const ACTIVITY_PAGE_SIZE = 25;
 export const USER_FILTER_DEBOUNCE_MS = 300;
 
 export interface ActivityFilters {
-  user: string; // a user id, or part of a username
+  user: string;
   action: AuditAction | '';
   result: AuditResult | '';
-  from: string; // yyyy-MM-dd, as a date input gives it
+  from: string;
   to: string;
-  showApiReads: boolean; // admin views of account data (READ)
+  showApiReads: boolean;
 }
 
-// The checkbox that lets a high-volume type into the list
 export type TypeToggle = 'showApiReads';
 
 const NO_FILTERS: ActivityFilters = {
   user: '', action: '', result: '', from: '', to: '', showApiReads: false,
 };
 
-// The moment a local day starts, as ISO 8601; `addDays` moves it forward
 function localDayStart(date: string, addDays = 0): string {
   const day = new Date(`${date}T00:00:00`);
   day.setDate(day.getDate() + addDays);
@@ -54,8 +52,6 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService
   ) { }
 
-  // Reads outnumber everything else, so they stay hidden until the box is ticked, both from the
-  // list and from the type filter
   get actionOptions(): AuditAction[] {
     const { showApiReads } = this.filters;
     return AUDIT_ACTIONS.filter(action => action !== 'READ' || showApiReads);
@@ -83,7 +79,6 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Typing only reaches the server once the admin pauses
     this.subscriptions.add(
       this.userTerms.pipe(debounceTime(USER_FILTER_DEBOUNCE_MS)).subscribe(() => this.fetchPage(0))
     );
@@ -106,7 +101,6 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
     this.fetchPage(0);
   }
 
-  // Hiding a type again also clears it if it was the chosen one
   setShown(toggle: TypeToggle, show: boolean): void {
     this.filters = { ...this.filters, [toggle]: show };
     const { action } = this.filters;
@@ -139,12 +133,10 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
     return (log.statusCode ?? 0) >= 400;
   }
 
-  // The fields an update changed arrive as a list
   detailText(value: string | number | boolean | string[]): string {
     return Array.isArray(value) ? value.join(', ') : String(value);
   }
 
-  // A request still in flight is dropped, so a slow old response can't overwrite a newer one
   private fetchPage(offset: number): void {
     this.isLoading = true;
     this.pageRequest?.unsubscribe();
@@ -166,9 +158,7 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
   private buildQuery(offset: number): AuditLogQuery {
     const { user, action, result, from, to } = this.filters;
     const term = user.trim();
-    // A whole number is taken as a user id; any other text is matched against usernames
     const isUserId = /^\d+$/.test(term);
-    // No type chosen: every type still shown, which is all of them once both boxes are ticked
     const shown = this.actionOptions;
 
     return {

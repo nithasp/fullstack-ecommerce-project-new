@@ -33,8 +33,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Seed state synchronously from the service so the template renders
-    // correctly on the very first paint — no waiting for an observable tick.
     this.isLoggedIn = this.authService.isLoggedIn;
     this.currentUser = this.authService.getCurrentUser();
 
@@ -42,9 +40,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.cartCount = this.cartService.getCartCount();
     });
 
-    // skip(1) ignores the BehaviorSubject's replay of the current value (which
-    // we already seeded above). After that, only genuine state changes fire:
-    // false → true means the user just logged in; true → false means logout.
     this.authSub = this.authService.isLoggedIn$.pipe(
       distinctUntilChanged(),
       skip(1)
@@ -53,7 +48,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       if (!loggedIn) {
         this.userMenuOpen = false;
       } else {
-        // User just logged in — fetch fresh profile from the server.
         this.authService.fetchCurrentUser().subscribe({ error: () => {} });
       }
     });
@@ -116,7 +110,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Close menus when the user clicks outside the navbar. */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.elRef.nativeElement.contains(event.target)) {
@@ -125,7 +118,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Close menus on Escape key press. */
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
     if (this.mobileMenuOpen) this.closeMobileMenu();

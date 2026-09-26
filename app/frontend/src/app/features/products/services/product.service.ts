@@ -20,7 +20,6 @@ export class ProductService {
 
   constructor(private http: HttpClient) {}
 
-  // Filtering happens on the server, so a page only ever holds matching products
   getProducts(query: ProductQuery): Observable<Page<Product>> {
     let params = new HttpParams().set('limit', query.limit).set('offset', query.offset);
     if (query.category) params = params.set('category', query.category);
@@ -31,7 +30,6 @@ export class ProductService {
       .pipe(map(res => ({ items: res.data, total: res.meta?.total ?? res.data.length })));
   }
 
-  // Every category in the catalog, not just the ones on the current page
   getCategories(): Observable<string[]> {
     return this.http
       .get<ApiResponse<string[]>>(`${this.baseUrl}/categories`)

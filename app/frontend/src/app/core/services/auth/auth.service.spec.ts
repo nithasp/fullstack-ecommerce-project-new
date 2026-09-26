@@ -57,8 +57,6 @@ describe('AuthService', () => {
     expect(service).toBeTruthy();
   });
 
-  // ── Register ───────────────────────────────────────────────────────────────
-
   describe('register', () => {
     it('should POST to /auth/register and start a session', () => {
       service.register('testuser', 'password123').subscribe((res) => {
@@ -72,7 +70,6 @@ describe('AuthService', () => {
         username: 'testuser',
         password: 'password123',
       });
-      // the refresh cookie only comes back on a call that sends credentials
       expect(req.request.withCredentials).toBeTrue();
 
       req.flush({ status: 200, message: 'ok', data: mockSession });
@@ -107,8 +104,6 @@ describe('AuthService', () => {
       expect(errorReceived).toBeTrue();
     });
   });
-
-  // ── Login ──────────────────────────────────────────────────────────────────
 
   describe('login', () => {
     it('should POST to /auth/login and keep the access token in memory only', () => {
@@ -152,8 +147,6 @@ describe('AuthService', () => {
     });
   });
 
-  // ── Token helpers ──────────────────────────────────────────────────────────
-
   describe('token helpers', () => {
     it('hasValidToken should return false before a session starts', () => {
       expect(service.hasValidToken()).toBeFalse();
@@ -175,8 +168,6 @@ describe('AuthService', () => {
       expect(service.hasValidToken()).toBeFalse();
     });
   });
-
-  // ── Session start ──────────────────────────────────────────────────────────
 
   describe('initializeAuth', () => {
     it('should not ask the server when no session was cached', () => {
@@ -214,8 +205,6 @@ describe('AuthService', () => {
     });
   });
 
-  // ── Refresh ────────────────────────────────────────────────────────────────
-
   describe('refreshAccessToken', () => {
     it('should POST an empty body and update the token it holds', () => {
       service.refreshAccessToken().subscribe((res) => {
@@ -249,8 +238,6 @@ describe('AuthService', () => {
     });
   });
 
-  // ── Logout ─────────────────────────────────────────────────────────────────
-
   describe('logout', () => {
     it('should tell the server and drop everything it holds', () => {
       service.login('u', 'p').subscribe();
@@ -276,8 +263,6 @@ describe('AuthService', () => {
       expect(loggedIn).toBeFalse();
     });
   });
-
-  // ── getCurrentUser ─────────────────────────────────────────────────────────
 
   describe('getCurrentUser', () => {
     it('should return null when no user is stored', () => {

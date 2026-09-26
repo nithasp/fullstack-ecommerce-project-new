@@ -31,7 +31,6 @@ describe('ActivityLogComponent', () => {
     ...overrides,
   });
 
-  // What the page asked the API for last
   const lastQuery = (): AuditLogQuery => apiSpy.getAuditLogs.calls.mostRecent().args[0];
 
   beforeEach(async () => {

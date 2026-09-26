@@ -11,7 +11,6 @@ export interface CartApiItem {
   shopName: string | null;
   createdAt: string;
   updatedAt: string;
-  // NUMERIC columns arrive as strings so no decimal is lost on the way
   productName: string;
   productPrice: string;
   productCategory: string | null;

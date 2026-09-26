@@ -204,7 +204,6 @@ describe('InputFieldComponent', () => {
       expect(input().value).toBe('hunter2');
     });
 
-    // A bare <button> defaults to submit, which would post the form it sits in
     it('should not submit the surrounding form', () => {
       expect(toggle().type).toBe('button');
     });

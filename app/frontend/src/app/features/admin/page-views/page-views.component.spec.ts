@@ -25,7 +25,6 @@ describe('PageViewsComponent', () => {
     ...overrides,
   });
 
-  // What the page asked the API for last
   const lastQuery = (): PageViewQuery => apiSpy.getPageViews.calls.mostRecent().args[0];
 
   beforeEach(async () => {

@@ -1,7 +1,6 @@
 @import 'variables';
 @import 'mixins';
 
-// Badge colours beyond the shared palette; each pair keeps its text readable (4.5:1 or better)
 $badge-gray: #4b5563;
 $badge-slate: #475569;
 $badge-slate-bg: #f1f5f9;
@@ -62,8 +61,6 @@ $font-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace
       border-bottom-color: $color-primary;
     }
   }
-
-  // ── Filters ──────────────────────────────────────────────────────────────
 
   &__filters {
     display: flex;
@@ -138,8 +135,6 @@ $font-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace
     &:hover { background: $color-primary-bg; }
   }
 
-  // ── States ───────────────────────────────────────────────────────────────
-
   &__loading {
     @include flex-center;
     flex-direction: column;
@@ -152,9 +147,6 @@ $font-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace
     font-size: $font-size-lg;
   }
 
-  // ── Table ────────────────────────────────────────────────────────────────
-
-  // Scrolls sideways on a narrow screen rather than squeezing the columns
   &__table-wrap {
     overflow-x: auto;
     background: $color-bg-white;
@@ -315,8 +307,6 @@ $font-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace
     }
   }
 
-  // ── Pager ────────────────────────────────────────────────────────────────
-
   &__pager {
     @include flex-between;
     flex-wrap: wrap;
@@ -339,7 +329,6 @@ $font-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace
     padding: $spacing-xs $spacing-md;
   }
 
-  // Announced by screen readers, never shown
   &__sr-only {
     position: absolute;
     width: 1px;

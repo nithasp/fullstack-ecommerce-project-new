@@ -11,11 +11,6 @@ export interface PageViewReport {
   page?: string;
 }
 
-/**
- * Tells the backend which page of the app a signed-in user opens, so it shows up in the admin
- * Activity Log. Each route names its page in `data.page`. Reports are sent in the background:
- * one that fails is dropped without bothering the user, since it only feeds the log.
- */
 @Injectable({ providedIn: 'root' })
 export class PageViewService {
   private readonly baseUrl = `${API.baseUrl}/page-views`;
@@ -26,11 +21,9 @@ export class PageViewService {
     private authService: AuthService
   ) {}
 
-  // Called once, from AppComponent
   trackPageViews(): Subscription {
     return this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      // Pages seen while signed out can't be reported: the endpoint needs a token
       filter(() => this.authService.isLoggedIn),
       mergeMap((event) =>
         this.http
@@ -40,7 +33,6 @@ export class PageViewService {
     ).subscribe();
   }
 
-  // The path without its query string or fragment, and the name the deepest matched route gives its page
   private reportFor(url: string): PageViewReport {
     let route = this.router.routerState.snapshot.root;
     while (route.firstChild) route = route.firstChild;

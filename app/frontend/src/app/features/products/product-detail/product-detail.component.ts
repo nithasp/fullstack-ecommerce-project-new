@@ -19,7 +19,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   selectedImage = '';
   loading = true;
 
-  // Tracks accumulated qty before the debounce fires
   private pendingQty = 0;
 
   private clickSubject = new Subject<void>();
@@ -58,7 +57,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       const addedQty = this.pendingQty;
       this.pendingQty = 0;
 
-      // Sync accumulated local quantity to the backend
       this.cartService.syncToBackend(this.product, this.selectedType);
 
       this.notificationService.success(
@@ -116,10 +114,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
     this.pendingQty += this.selectedQuantity;
 
-    // Immediately reflect in local cart
     this.cartService.addToCartLocal(this.product, this.selectedQuantity, this.selectedType);
 
-    // Reset the 400ms debounce window on every click
     this.clickSubject.next();
   }
 

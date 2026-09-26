@@ -15,6 +15,6 @@ export interface PageViewQuery {
   userId?: number;
   username?: string;
   path?: string;
-  from?: string; // ISO 8601
-  to?: string;   // ISO 8601, exclusive
+  from?: string;
+  to?: string;
 }

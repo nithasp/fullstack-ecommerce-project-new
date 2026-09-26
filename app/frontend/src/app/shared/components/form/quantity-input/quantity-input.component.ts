@@ -27,8 +27,6 @@ export class QuantityInputComponent implements ControlValueAccessor, OnDestroy {
   private onTouched: () => void = () => {};
 
   writeValue(value: number): void {
-    // Skip external updates while the user is actively typing so the
-    // optimistic cart update doesn't reset the input mid-keystroke.
     if (!this.isTyping) {
       this.value = value ?? this.min;
     }
@@ -69,7 +67,6 @@ export class QuantityInputComponent implements ControlValueAccessor, OnDestroy {
       const clamped = this.clamp(parsed);
       this.value = clamped;
 
-      // Immediately correct the displayed value when it exceeds the allowed range
       if (parsed !== clamped) {
         input.value = String(clamped);
       }
@@ -86,7 +83,6 @@ export class QuantityInputComponent implements ControlValueAccessor, OnDestroy {
   }
 
   onBlur(event: Event): void {
-    // Flush any pending debounce immediately on blur
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;

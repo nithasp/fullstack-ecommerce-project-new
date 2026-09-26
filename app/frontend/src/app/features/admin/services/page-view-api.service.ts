@@ -11,7 +11,6 @@ export class PageViewApiService {
 
   constructor(private http: HttpClient) {}
 
-  // Filtering happens on the server; a filter left unset stays out of the query string
   getPageViews(query: PageViewQuery): Observable<Page<PageView>> {
     let params = new HttpParams().set('limit', query.limit).set('offset', query.offset);
     if (query.userId) params = params.set('userId', query.userId);

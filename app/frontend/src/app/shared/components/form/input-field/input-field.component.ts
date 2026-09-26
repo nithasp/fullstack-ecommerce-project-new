@@ -25,11 +25,6 @@ export class InputFieldComponent implements ControlValueAccessor {
   @Input() errorMessages: Record<string, string> = {};
   @Input() forceTouch = false;
 
-  /**
-   * A message for a rule this component cannot see for itself, such as a cross-field
-   * comparison. It reads like any other error: it reddens the border and shows once the
-   * field is touched.
-   */
   @Input() extraError = '';
 
   @Output() valueChanged = new EventEmitter<string>();
@@ -38,7 +33,6 @@ export class InputFieldComponent implements ControlValueAccessor {
   touched = false;
   disabled = false;
 
-  /** Only meaningful for type="password": true while the value is shown as plain text */
   passwordShown = false;
 
   private onChange: (value: string) => void = () => {};
@@ -75,10 +69,6 @@ export class InputFieldComponent implements ControlValueAccessor {
     return this.type === 'password';
   }
 
-  /**
-   * What the rendered input actually uses. A revealed password renders as text, while
-   * `type` stays 'password' so the email rule and isPassword keep reading the truth.
-   */
   get inputType(): string {
     return this.isPassword && this.passwordShown ? 'text' : this.type;
   }

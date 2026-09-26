@@ -81,7 +81,6 @@ describe('ProductDetailComponent', () => {
   });
 
   it('should not auto-select type when multiple types exist', () => {
-    // With 2 types the component leaves selectedType undefined until user picks one
     expect(component.selectedType).toBeUndefined();
   });
 
@@ -97,7 +96,6 @@ describe('ProductDetailComponent', () => {
   });
 
   it('should update currentPrice based on selectedType', () => {
-    // No type selected → falls back to product price
     expect(component.currentPrice).toBe(79.99);
     component.selectType(mockProduct.types[1]);
     expect(component.currentPrice).toBe(84.99);
@@ -115,7 +113,6 @@ describe('ProductDetailComponent', () => {
     expect(cartService.addToCartLocal).toHaveBeenCalledWith(
       component.product!, 2, component.selectedType
     );
-    // Success notification fires after the 400ms debounce
     tick(400);
     expect(notificationSpy.success).toHaveBeenCalled();
   }));

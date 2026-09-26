@@ -120,7 +120,6 @@ export class CartService {
     };
   }
 
-  /** Update local cart immediately for instant UI feedback (before debounce fires). */
   addToCartLocal(product: Product, quantity: number, selectedType?: ProductType): void {
     const existingIndex = this.cartItems.findIndex(
       item => item.product.id === product.id &&
@@ -140,7 +139,6 @@ export class CartService {
     this.cartSubject.next([...this.cartItems]);
   }
 
-  /** Sync current local quantity to the backend (PUT if exists, POST if new). */
   syncToBackend(product: Product, selectedType?: ProductType): void {
     const key = this.makeKey(product.id, selectedType?._id);
     const item = this.cartItems.find(
@@ -266,7 +264,6 @@ export class CartService {
     }
   }
 
-  /** Local update immediately; API call debounced 400ms. */
   updateQuantity(productId: number, quantity: number, typeId?: string): void {
     const key = this.makeKey(productId, typeId);
     const item = this.cartItems.find(

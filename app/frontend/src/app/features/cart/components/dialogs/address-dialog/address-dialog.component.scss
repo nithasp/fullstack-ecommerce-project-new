@@ -1,8 +1,6 @@
 @import 'variables';
 @import 'mixins';
 
-// ─── Overlay — fixed, covers entire app ──────────────────────────────────────
-
 .address-dialog-overlay {
   position: fixed;
   inset: 0;
@@ -18,8 +16,6 @@
     animation: overlayFadeOut $transition-base forwards;
   }
 }
-
-// ─── Dialog Panel ─────────────────────────────────────────────────────────────
 
 .address-dialog {
   background: $color-bg-white;
@@ -88,7 +84,6 @@
     }
   }
 
-  // Centered loading / empty state
   &__loading,
   &__empty {
     flex: 1;
@@ -104,7 +99,6 @@
     p { margin: 0; }
   }
 
-  // Scrollable address list
   &__list {
     flex: 1;
     overflow-y: auto;
@@ -114,7 +108,6 @@
     gap: $spacing-sm;
   }
 
-  // Footer: add + confirm buttons
   &__footer {
     padding: $spacing-md $spacing-lg;
     border-top: 1px solid $color-border;
@@ -154,7 +147,6 @@
     font-weight: $font-weight-semibold;
   }
 
-  // Scrollable add/edit form
   &__form {
     flex: 1;
     overflow-y: auto;
@@ -191,8 +183,6 @@
   }
 
 }
-
-// ─── Address List Item ────────────────────────────────────────────────────────
 
 .address-list-item {
   display: flex;
@@ -332,8 +322,6 @@
   }
 }
 
-// ─── Add / Edit Form ──────────────────────────────────────────────────────────
-
 .address-form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -420,8 +408,6 @@
     flex-shrink: 0;
   }
 }
-
-// ─── Animations ───────────────────────────────────────────────────────────────
 
 @keyframes overlayFadeIn {
   from { opacity: 0; }

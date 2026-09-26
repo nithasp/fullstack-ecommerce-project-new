@@ -161,7 +161,7 @@ describe('ProductListComponent', () => {
 
   it('should render category filter buttons', () => {
     const buttons = fixture.nativeElement.querySelectorAll('.product-list__category-btn');
-    expect(buttons.length).toBe(3); // All + Electronics + Furniture
+    expect(buttons.length).toBe(3);
   });
 
   it('should show an error when products fail to load', () => {

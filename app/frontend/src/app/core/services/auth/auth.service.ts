@@ -20,16 +20,12 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<AuthUser | null>(this.getCachedUser());
   currentUser$ = this.currentUserSubject.asObservable();
 
-  /** Emits once when the initial auth check is complete. Guards wait on this. */
   private initializedSubject = new BehaviorSubject<boolean>(false);
   authInitialized$ = this.initializedSubject.asObservable();
 
   constructor(private authApi: AuthApiService) {}
 
-  /**
-   * A reload wipes the access token, so the cookie is asked for a new one before the app renders.
-   * The cached profile only says whether a session is worth asking about; the server decides.
-   */
+  /** The cached profile only says whether a session is worth asking about; the server decides. */
   initializeAuth(): Observable<void> {
     if (!this.getCachedUser()) {
       this.loggedInSubject.next(false);
@@ -116,7 +112,6 @@ export class AuthService {
     this.clearSession();
   }
 
-  /** Wipe the local session without notifying the backend (use when the session is already gone). */
   clearSession(): void {
     this.accessToken = null;
     localStorage.removeItem(USER_KEY);
