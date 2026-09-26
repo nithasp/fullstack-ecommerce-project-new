@@ -15,50 +15,41 @@
         </div>
 
         <form #registerForm="ngForm" (ngSubmit)="onSubmit(registerForm)" class="auth-card__form" novalidate>
-            <div class="form-group">
-                <label for="username" class="form-label">
-                    Username <span class="required">*</span>
-                </label>
-                <input type="text" id="username" name="username" class="form-input"
-                    [class.form-input--error]="usernameField.invalid && (usernameField.touched || submitted)"
-                    [(ngModel)]="username" #usernameField="ngModel" required minlength="3"
-                    placeholder="Choose a username" [disabled]="isLoading" />
-                <div class="form-error" *ngIf="usernameField.invalid && (usernameField.touched || submitted)">
-                    <span *ngIf="usernameField.errors?.['required']">Username is required</span>
-                    <span *ngIf="usernameField.errors?.['minlength']">Username must be at least 3 characters</span>
-                </div>
-            </div>
+            <app-input-field
+                name="username"
+                label="Username"
+                placeholder="Choose a username"
+                [required]="true"
+                [minLength]="3"
+                [forceTouch]="submitted"
+                [(ngModel)]="username"
+                [disabled]="isLoading"
+            ></app-input-field>
 
-            <div class="form-group">
-                <label for="password" class="form-label">
-                    Password <span class="required">*</span>
-                </label>
-                <input type="password" id="password" name="password" class="form-input"
-                    [class.form-input--error]="passwordField.invalid && (passwordField.touched || submitted)"
-                    [(ngModel)]="password" #passwordField="ngModel" required minlength="8"
-                    placeholder="Create a password" [disabled]="isLoading" />
-                <div class="form-error" *ngIf="passwordField.invalid && (passwordField.touched || submitted)">
-                    <span *ngIf="passwordField.errors?.['required']">Password is required</span>
-                    <span *ngIf="passwordField.errors?.['minlength']">Password must be at least 8 characters</span>
-                </div>
-            </div>
+            <app-input-field
+                name="password"
+                label="Password"
+                type="password"
+                placeholder="Create a password"
+                [required]="true"
+                [minLength]="8"
+                [forceTouch]="submitted"
+                [(ngModel)]="password"
+                [disabled]="isLoading"
+            ></app-input-field>
 
-            <div class="form-group">
-                <label for="confirmPassword" class="form-label">
-                    Confirm Password <span class="required">*</span>
-                </label>
-                <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
-                    [class.form-input--error]="(confirmField.invalid && (confirmField.touched || submitted)) || (passwordMismatch && (confirmField.touched || submitted))"
-                    [(ngModel)]="confirmPassword" #confirmField="ngModel" required placeholder="Confirm your password"
-                    [disabled]="isLoading" />
-                <div class="form-error" *ngIf="confirmField.invalid && (confirmField.touched || submitted)">
-                    <span *ngIf="confirmField.errors?.['required']">Please confirm your password</span>
-                </div>
-                <div class="form-error"
-                    *ngIf="passwordMismatch && confirmField.valid && (confirmField.touched || submitted)">
-                    <span>Passwords do not match</span>
-                </div>
-            </div>
+            <app-input-field
+                name="confirmPassword"
+                label="Confirm Password"
+                type="password"
+                placeholder="Confirm your password"
+                [required]="true"
+                [errorMessages]="confirmErrorMessages"
+                [extraError]="passwordMismatch ? 'Passwords do not match' : ''"
+                [forceTouch]="submitted"
+                [(ngModel)]="confirmPassword"
+                [disabled]="isLoading"
+            ></app-input-field>
 
             <button type="submit" class="auth-btn" [disabled]="isLoading">
                 <span *ngIf="!isLoading">Create Account</span>

@@ -16,6 +16,8 @@ export class RegisterComponent {
   isLoading = false;
   submitted = false;
 
+  readonly confirmErrorMessages = { required: 'Please confirm your password' };
+
   constructor(
     private authService: AuthService,
     private notification: NotificationService,
@@ -29,7 +31,9 @@ export class RegisterComponent {
   onSubmit(form: NgForm): void {
     this.submitted = true;
 
-    if (form.invalid) {
+    // app-input-field renders its own messages, and only `required` reaches the NgForm,
+    // so the length rules are checked here the way the address dialog checks its own
+    if (form.invalid || this.username.length < 3 || this.password.length < 8) {
       this.notification.error('Please fill in all required fields.');
       return;
     }

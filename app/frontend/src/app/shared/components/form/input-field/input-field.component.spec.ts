@@ -149,4 +149,88 @@ describe('InputFieldComponent', () => {
     expect(error.textContent).toContain('required');
   });
 
+  it('should report an extraError alongside its own rules', () => {
+    component.extraError = 'Passwords do not match';
+    component.touched = true;
+    expect(component.errors).toContain('Passwords do not match');
+    expect(component.showErrors).toBeTrue();
+  });
+
+  describe('password toggle', () => {
+    const toggle = (): HTMLButtonElement =>
+      fixture.nativeElement.querySelector('.input-field__toggle');
+    const input = (): HTMLInputElement =>
+      fixture.nativeElement.querySelector('.input-field__input');
+
+    beforeEach(() => {
+      component.type = 'password';
+      component.name = 'password';
+      fixture.detectChanges();
+    });
+
+    it('should only offer the toggle on a password field', () => {
+      expect(toggle()).toBeTruthy();
+      component.type = 'text';
+      fixture.detectChanges();
+      expect(toggle()).toBeNull();
+    });
+
+    it('should render the value as text once revealed', () => {
+      expect(input().type).toBe('password');
+      toggle().click();
+      fixture.detectChanges();
+      expect(component.passwordShown).toBeTrue();
+      expect(input().type).toBe('text');
+    });
+
+    it('should mask the value again on a second click', () => {
+      toggle().click();
+      toggle().click();
+      fixture.detectChanges();
+      expect(input().type).toBe('password');
+    });
+
+    it('should keep type reading password while revealed', () => {
+      component.passwordShown = true;
+      expect(component.type).toBe('password');
+      expect(component.isPassword).toBeTrue();
+      expect(component.inputType).toBe('text');
+    });
+
+    it('should keep the value across a toggle', () => {
+      component.onInput('hunter2');
+      toggle().click();
+      fixture.detectChanges();
+      expect(input().value).toBe('hunter2');
+    });
+
+    // A bare <button> defaults to submit, which would post the form it sits in
+    it('should not submit the surrounding form', () => {
+      expect(toggle().type).toBe('button');
+    });
+
+    it('should label itself for what the click will do', () => {
+      expect(toggle().getAttribute('aria-label')).toBe('Show password');
+      expect(toggle().getAttribute('aria-pressed')).toBe('false');
+
+      component.passwordShown = true;
+      fixture.detectChanges();
+      expect(toggle().getAttribute('aria-label')).toBe('Hide password');
+      expect(toggle().getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('should swap the eye for the struck-through eye when revealed', () => {
+      expect(fixture.nativeElement.querySelector('.input-field__toggle svg line')).toBeNull();
+      component.passwordShown = true;
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.input-field__toggle svg line')).toBeTruthy();
+    });
+
+    it('should disable alongside the input', () => {
+      component.setDisabledState(true);
+      fixture.detectChanges();
+      expect(toggle().disabled).toBeTrue();
+    });
+  });
+
 });
