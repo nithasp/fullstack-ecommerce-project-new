@@ -2,13 +2,15 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { guestGuard } from './core/guards/guest.guard';
 
 const routes: Routes = [
   { path: '', redirectTo: 'products', pathMatch: 'full' },
   {
     path: 'auth',
     loadChildren: () =>
-      import('./features/auth/auth.module').then(m => m.AuthModule)
+      import('./features/auth/auth.module').then(m => m.AuthModule),
+    canActivate: [guestGuard]
   },
   {
     path: 'products',
