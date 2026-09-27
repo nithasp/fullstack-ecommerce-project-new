@@ -33,13 +33,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
   menuClosing = false;
   userMenuOpen = false;
 
-  // Read through the async pipe, so the template never holds a copy of service state that could
-  // fall out of step with it
   readonly isLoggedIn$: Observable<boolean> = this.authService.isLoggedIn$;
   readonly currentUser$: Observable<AuthUser | null> = this.authService.currentUser$;
   readonly displayName$: Observable<string> = this.currentUser$.pipe(map((user) => user?.username ?? 'User'));
 
-  // Only decides whether the link shows; the admin API checks the role itself
   readonly isAdmin$: Observable<boolean> = this.currentUser$.pipe(map((user) => user?.role === 'admin'));
 
   readonly cartCount$: Observable<number> = this.cartService.cart$.pipe(
@@ -50,8 +47,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private authSub!: Subscription;
 
   ngOnInit(): void {
-    // A fresh profile is fetched on the transition into a session; skip(1) drops the replay of
-    // the value the stream already holds
     this.authSub = this.authService.isLoggedIn$
       .pipe(distinctUntilChanged(), skip(1))
       .subscribe((loggedIn) => {

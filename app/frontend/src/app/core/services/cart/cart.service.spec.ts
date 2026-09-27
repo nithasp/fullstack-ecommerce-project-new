@@ -169,7 +169,6 @@ describe('CartService', () => {
   });
 
   describe('debounced quantity sync', () => {
-    /** Puts two rows in the cart already carrying server ids, as a fetched cart would. */
     function seedTwoSyncedRows(): void {
       service.fetchCart();
       httpMock.expectOne(`${API}/cart`).flush({

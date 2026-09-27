@@ -9,11 +9,6 @@ import { DialogConfirmComponent } from './components/dialog/dialog-confirm/dialo
 import { FocusTrapDirective } from './directives/focus-trap.directive';
 import { PortalToBodyDirective } from './directives/portal-to-body.directive';
 
-/**
- * The pieces the eagerly-loaded shell needs. The form controls live in SharedFormsModule instead,
- * because only lazy features use them — keeping them here dragged both forms packages and two
- * component templates into the initial bundle for no one.
- */
 @NgModule({
   declarations: [
     TruncatePipe,

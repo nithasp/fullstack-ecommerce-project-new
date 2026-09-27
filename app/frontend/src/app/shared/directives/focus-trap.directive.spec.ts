@@ -45,7 +45,6 @@ describe('FocusTrapDirective', () => {
   describe('with focusable content', () => {
     beforeEach(() => {
       fixture = TestBed.createComponent(HostComponent);
-      // The element has to be in the document for focus() to take effect
       document.body.appendChild(fixture.nativeElement);
       fixture.detectChanges();
     });
@@ -71,7 +70,6 @@ describe('FocusTrapDirective', () => {
     it('should leave Tab alone in the middle of the panel', () => {
       byId('middle').focus();
       tab();
-      // The browser moves focus itself; the directive only intervenes at the edges
       expect(document.activeElement).toBe(byId('middle'));
     });
 

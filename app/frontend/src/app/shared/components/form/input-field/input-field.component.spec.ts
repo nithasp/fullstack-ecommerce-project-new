@@ -4,7 +4,6 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { InputFieldComponent } from './input-field.component';
 import { IconComponent } from '@shared/components/ui/icon/icon.component';
 
-// The component reads its state from the control it is bound to, so the tests drive a real one
 @Component({
   template: `
     <form [formGroup]="form">

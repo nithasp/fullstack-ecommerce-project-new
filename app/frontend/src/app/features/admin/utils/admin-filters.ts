@@ -1,5 +1,3 @@
-// Shared by the Activity Log and Page views pages, which filter the same way over different rows
-
 export const USER_FILTER_DEBOUNCE_MS = 300;
 
 // The moment a local day starts, as ISO 8601; `addDays` moves it forward

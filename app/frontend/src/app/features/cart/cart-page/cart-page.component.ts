@@ -55,8 +55,6 @@ export class CartPageComponent implements OnInit, OnDestroy {
   discountSuccess = '';
   discountError = '';
 
-  // Totals, recomputed whenever the cart, the selection or the discount changes rather than read
-  // through getters the template would re-run on every change-detection pass
   selectedCount = 0;
   selectedTotal = 0;
   discountAmount = 0;
@@ -110,7 +108,6 @@ export class CartPageComponent implements OnInit, OnDestroy {
       ),
     );
 
-    // A row's spinner comes from the in-flight set, which changes independently of the cart itself
     this.subscriptions.add(this.cartService.loading$.subscribe(() => this.rebuildView()));
   }
 
@@ -151,13 +148,10 @@ export class CartPageComponent implements OnInit, OnDestroy {
     }
   }
 
-  // The cart row has no id of its own until the server gives it one, so the product and the
-  // chosen option identify it
   getItemKey(item: CartItem): string {
     return `${item.product.id}_${item.selectedType?._id ?? 'default'}`;
   }
 
-  /** The single place the view is derived from the cart, the selection and the in-flight set. */
   private rebuildView(): void {
     const groups = new Map<string, ShopGroup>();
 

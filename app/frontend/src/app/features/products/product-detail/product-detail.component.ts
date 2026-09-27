@@ -18,7 +18,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   readonly ratingStars: number[] = [1, 2, 3, 4, 5];
   readonly trackByValue = trackByValue;
-  // ProductType._id and Review._id are both optional, so position is the only stable key
   readonly trackByIndex = trackByIndex;
 
   selectedQuantity = 1;

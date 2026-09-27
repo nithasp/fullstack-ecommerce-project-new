@@ -82,8 +82,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.fetchPage(this.products.length);
   }
 
-  // OnPush: state that arrives from a request or a debounced filter, rather than from a
-  // template event, has to say so
   private fetchPage(offset: number): void {
     this.cdr.markForCheck();
     this.pageRequest?.unsubscribe();

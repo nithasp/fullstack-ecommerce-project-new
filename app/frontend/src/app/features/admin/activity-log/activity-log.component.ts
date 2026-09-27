@@ -142,8 +142,6 @@ export class ActivityLogComponent implements OnInit, OnDestroy {
     return Array.isArray(value) ? value.join(', ') : String(value);
   }
 
-  // OnPush: state that arrives from a request or a debounced filter, rather than from a
-  // template event, has to say so
   private fetchPage(offset: number): void {
     this.isLoading = true;
     this.cdr.markForCheck();

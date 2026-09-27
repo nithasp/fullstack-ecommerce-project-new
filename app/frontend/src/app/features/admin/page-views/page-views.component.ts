@@ -103,8 +103,6 @@ export class PageViewsComponent implements OnInit, OnDestroy {
     this.expandedId = this.expandedId === id ? null : id;
   }
 
-  // OnPush: state that arrives from a request or a debounced filter, rather than from a
-  // template event, has to say so
   private fetchPage(offset: number): void {
     this.isLoading = true;
     this.cdr.markForCheck();

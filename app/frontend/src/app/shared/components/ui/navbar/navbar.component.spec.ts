@@ -24,7 +24,6 @@ describe('NavbarComponent', () => {
   let fixture: ComponentFixture<NavbarComponent>;
   let cartService: CartService;
 
-  // The component reads service state through the async pipe, so the tests move the services
   let isLoggedIn$: BehaviorSubject<boolean>;
   let currentUser$: BehaviorSubject<AuthUser | null>;
 

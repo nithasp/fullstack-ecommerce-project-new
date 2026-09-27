@@ -3,8 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IconComponent } from './icon.component';
 import { IconName } from '@core/models/icon.model';
 
-// The component styles itself through its own element selector, so the tests need a real
-// <app-icon> in a template rather than the synthetic host TestBed would otherwise create
 @Component({
   template: '<app-icon [name]="name"></app-icon>',
 })
@@ -39,7 +37,6 @@ describe('IconComponent', () => {
     expect(icon.style.getPropertyValue('--icon-src')).toBe("url('assets/images/ui/eye-off.svg')");
   });
 
-  // The mask paints currentColor, so the icon has to inherit rather than carry a colour of its own
   it('should take its colour from the surrounding text', () => {
     icon.style.color = 'rgb(255, 0, 0)';
 

@@ -36,7 +36,6 @@ export class DialogConfirmComponent implements OnInit {
     this.cancel();
   }
 
-  // Dismissing has to be reachable from the keyboard, not only by clicking the backdrop
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
     if (this.config && !this.closing) this.cancel();

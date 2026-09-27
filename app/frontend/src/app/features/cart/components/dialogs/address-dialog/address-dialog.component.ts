@@ -125,7 +125,6 @@ export class AddressDialogComponent implements OnInit, OnChanges {
     this.closing = true;
   }
 
-  // Dismissing has to be reachable from the keyboard, not only by clicking the backdrop
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
     if (this.dialogMode === 'list') {

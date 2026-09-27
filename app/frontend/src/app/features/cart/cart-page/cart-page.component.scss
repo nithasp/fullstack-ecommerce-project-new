@@ -1,13 +1,6 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 
-// The cart page carries ten UI blocks (delivery bar, shop group, row, summary, sidebar,
-// discount, payment) and runs past the default per-component style budget, which is raised
-// to 16kB in angular.json to match. Roughly a third of the file is the two max-width blocks
-// at the bottom: these override desktop styles downward, against the mobile-first
-// `respond-to()` mixin the rest of the app uses. Rewriting them min-width would remove most
-// of that duplication and is the change to make before this grows again.
-
 .cart-page {
   @include container;
   padding-top: $spacing-xl;

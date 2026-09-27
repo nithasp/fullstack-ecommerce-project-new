@@ -9,10 +9,6 @@ const FOCUSABLE = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-/**
- * Keeps Tab inside a modal and hands focus back where it came from on close. Without it, tabbing
- * out of an open dialog lands on the page behind, which is still scrollable and clickable.
- */
 @Directive({
   selector: '[appFocusTrap]',
 })
@@ -23,7 +19,6 @@ export class FocusTrapDirective implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.previouslyFocused = document.activeElement as HTMLElement | null;
     const first = this.focusable()[0];
-    // The panel itself takes focus when it holds no control, so the screen reader starts inside it
     (first ?? this.host.nativeElement).focus();
   }
 

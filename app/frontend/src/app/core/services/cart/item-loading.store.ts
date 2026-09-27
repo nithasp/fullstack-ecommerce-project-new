@@ -6,7 +6,6 @@ export function cartItemKey(productId: number, typeId?: string): string {
   return `${productId}_${typeId ?? 'default'}`;
 }
 
-/** The rows with a request in flight, so each one can show its own spinner. */
 export class ItemLoadingStore {
   private readonly keys = new Set<string>();
   private readonly subject = new BehaviorSubject<Set<string>>(new Set());

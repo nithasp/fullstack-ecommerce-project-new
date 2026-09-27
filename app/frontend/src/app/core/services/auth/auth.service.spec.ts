@@ -12,7 +12,6 @@ function jwt(expSeconds: number): string {
   return `${header}.${payload}.signature`;
 }
 
-/** Encoded the way a real issuer does it: base64url, with the `=` padding stripped. */
 function base64UrlJwt(expSeconds: number): string {
   const encode = (value: object): string =>
     btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');

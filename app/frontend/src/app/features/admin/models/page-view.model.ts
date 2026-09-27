@@ -19,7 +19,6 @@ export interface PageViewQuery {
   to?: string;
 }
 
-/** The state of the page views filter bar, before it is turned into a PageViewQuery. */
 export interface PageViewFilters {
   user: string;
   path: string;

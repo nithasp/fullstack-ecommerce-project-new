@@ -40,7 +40,6 @@ describe('CartPageComponent', () => {
     shopName: 'Another Shop',
   };
 
-  /** rebuildView() replaces the row objects, so the current one is always read back from the view. */
   const firstRow = () => component.shopGroups[0].rows[0];
 
   beforeEach(async () => {

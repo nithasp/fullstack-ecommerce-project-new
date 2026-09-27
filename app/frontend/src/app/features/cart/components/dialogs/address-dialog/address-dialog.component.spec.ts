@@ -38,7 +38,6 @@ describe('AddressDialogComponent', () => {
     label: 'work',
   };
 
-  /** The overlay is portalled to document.body, so it is no longer under the fixture element. */
   const overlay = (): HTMLElement | null => document.body.querySelector('.address-dialog-overlay');
   const panel = (): HTMLElement | null => document.body.querySelector('.address-dialog');
 
@@ -334,7 +333,6 @@ describe('AddressDialogComponent', () => {
       component.promptDelete(work, new Event('click'));
       httpMock.expectOne(`${ADDRESSES}/2`).flush({ status: 200, message: 'ok', data: work });
 
-      // Falls back to the remaining default
       expect(component.localSelectedId).toBe(1);
       expect(notificationSpy.info).toHaveBeenCalledWith('Address removed.');
       flushAddresses([home]);

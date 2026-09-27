@@ -64,13 +64,10 @@ export class InputFieldComponent implements ControlValueAccessor {
     this.passwordShown = !this.passwordShown;
   }
 
-  // The control carries the rules, so the asterisk follows them instead of a separate input that
-  // could disagree with what is actually enforced
   get isRequired(): boolean {
     return !!this.ngControl?.control?.hasValidator(Validators.required);
   }
 
-  // The control decides what failed; this only turns those keys into text
   get errors(): string[] {
     const errors = this.ngControl?.errors;
     if (!errors) return [];

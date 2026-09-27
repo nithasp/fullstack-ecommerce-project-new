@@ -1,12 +1,9 @@
-// Not scoped to the component, because the host element is the icon itself — there is no inner
-// markup to encapsulate, and a global rule keeps the selector out of every consumer's stylesheet.
 app-icon {
   display: inline-block;
   width: 1em;
   height: 1em;
   flex-shrink: 0;
 
-  // The mask cuts the glyph out of a solid block of the inherited text colour
   background-color: currentColor;
 
   // Safari only dropped the prefix in 15.4, and the project still supports older builds
