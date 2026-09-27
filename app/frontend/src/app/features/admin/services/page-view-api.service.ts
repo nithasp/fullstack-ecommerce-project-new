@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { PageView, PageViewQuery } from '../models/page-view.model';
 import { ApiResponse, Page } from '@core/models/api.model';
-import { API } from '@core/config/api-config';
+import { API_BASE_URL } from '@core/config/api-config';
 
 @Injectable({ providedIn: 'root' })
 export class PageViewApiService {
-  private readonly baseUrl = `${API.baseUrl}/admin/page-views`;
+  private readonly baseUrl = `${inject(API_BASE_URL)}/admin/page-views`;
 
   constructor(private http: HttpClient) {}
 

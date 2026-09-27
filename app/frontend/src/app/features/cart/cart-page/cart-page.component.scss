@@ -1,5 +1,12 @@
-@import 'variables';
-@import 'mixins';
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// The cart page carries ten UI blocks (delivery bar, shop group, row, summary, sidebar,
+// discount, payment) and runs past the default per-component style budget, which is raised
+// to 16kB in angular.json to match. Roughly a third of the file is the two max-width blocks
+// at the bottom: these override desktop styles downward, against the mobile-first
+// `respond-to()` mixin the rest of the app uses. Rewriting them min-width would remove most
+// of that duplication and is the change to make before this grows again.
 
 .cart-page {
   @include container;
@@ -27,9 +34,13 @@
   }
 
   &__empty-icon {
-    font-size: 4rem;
     margin-bottom: $spacing-md;
     color: $color-text-muted;
+
+    app-icon {
+      width: 80px;
+      height: 80px;
+    }
   }
 
   &__continue-btn {
@@ -77,6 +88,11 @@
     font-weight: $font-weight-bold;
     color: $color-primary;
     text-transform: uppercase;
+
+    app-icon {
+      width: 16px;
+      height: 16px;
+    }
     letter-spacing: 0.5px;
     margin-bottom: $spacing-sm;
     padding-bottom: $spacing-sm;
@@ -188,22 +204,16 @@
   flex-shrink: 0;
   cursor: pointer;
 
-  &--checked {
-    background: $color-primary;
-    border-color: $color-primary;
-
-    svg {
-      color: #fff;
-    }
+  app-icon {
+    width: 12px;
+    height: 12px;
   }
 
+  &--checked,
   &--indeterminate {
     background: $color-primary;
     border-color: $color-primary;
-
-    svg {
-      color: #fff;
-    }
+    color: #fff;
   }
 }
 
@@ -231,8 +241,9 @@
   }
 
   &__icon {
+    width: 18px;
+    height: 18px;
     color: $color-primary;
-    flex-shrink: 0;
   }
 
   &__name {
@@ -440,6 +451,11 @@
     color: $color-text;
   }
 
+  &__checkout-icon {
+    width: 18px;
+    height: 18px;
+  }
+
   &__checkout-btn {
     @include button-primary;
     width: 100%;
@@ -474,9 +490,10 @@
     align-items: center;
     gap: $spacing-xs;
 
-    svg {
+    app-icon {
+      width: 14px;
+      height: 14px;
       color: $color-primary;
-      flex-shrink: 0;
     }
   }
 }
@@ -898,11 +915,11 @@
       font-size: $font-size-xs;
       gap: $spacing-xs;
       flex-wrap: wrap;
+    }
 
-      svg {
-        width: 14px;
-        height: 14px;
-      }
+    &__checkout-icon {
+      width: 14px;
+      height: 14px;
     }
   }
 }

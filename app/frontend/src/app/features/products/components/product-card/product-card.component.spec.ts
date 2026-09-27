@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProductCardComponent } from './product-card.component';
 import { TruncatePipe } from '@shared/pipes/truncate.pipe';
-import { Product } from '../../models/product.model';
+import { Product } from '@core/models/product.model';
 
 describe('ProductCardComponent', () => {
   let component: ProductCardComponent;

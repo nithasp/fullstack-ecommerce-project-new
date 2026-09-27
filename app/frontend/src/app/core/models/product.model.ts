@@ -36,11 +36,9 @@ export interface Product {
   shopName?: string;
 }
 
-export interface CartItem {
-  cartItemId?: number;
-  product: Product;
-  quantity: number;
-  selectedType?: ProductType;
-  shopId: string;
-  shopName: string;
+export interface ProductQuery {
+  limit: number;
+  offset: number;
+  category?: string;
+  search?: string;
 }

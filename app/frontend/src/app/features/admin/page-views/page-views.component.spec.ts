@@ -5,7 +5,8 @@ import { PageViewsComponent, PAGE_VIEWS_PAGE_SIZE } from './page-views.component
 import { USER_FILTER_DEBOUNCE_MS } from '../utils/admin-filters';
 import { PageViewApiService } from '../services/page-view-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
-import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '@shared/components/ui/loading-spinner/loading-spinner.component';
+import { IconComponent } from '@shared/components/ui/icon/icon.component';
 import { PageView, PageViewQuery } from '../models/page-view.model';
 
 describe('PageViewsComponent', () => {
@@ -40,7 +41,7 @@ describe('PageViewsComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [FormsModule],
-      declarations: [PageViewsComponent, LoadingSpinnerComponent],
+      declarations: [PageViewsComponent, LoadingSpinnerComponent, IconComponent],
       providers: [
         { provide: PageViewApiService, useValue: apiSpy },
         { provide: NotificationService, useValue: notificationSpy },

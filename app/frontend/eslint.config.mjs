@@ -32,8 +32,9 @@ export default tseslint.config(
         'error',
         { type: 'attribute', prefix: 'app', style: 'camelCase' },
       ],
-      // The shared stylesheet is imported by the component that owns it and by the page that
-      // reuses it, which is the point of the partial
+      // The app is built on NgModules throughout: every feature is a lazy-loaded module and
+      // SharedModule carries the shared declarations. Converting one component at a time would
+      // leave both wiring styles in the tree, so this stays off until the whole app moves together.
       '@angular-eslint/prefer-standalone': 'off',
       'no-console': 'error',
       eqeqeq: ['error', 'smart'],
@@ -64,7 +65,7 @@ export default tseslint.config(
     // has focusable controls of its own; making the backdrop itself focusable would put an
     // extra stop in the tab order
     files: [
-      'src/app/shared/components/dialogs/**/*.html',
+      'src/app/shared/components/dialog/**/*.html',
       'src/app/features/cart/components/dialogs/**/*.html',
     ],
     rules: {

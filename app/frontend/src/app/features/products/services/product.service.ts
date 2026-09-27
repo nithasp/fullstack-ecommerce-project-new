@@ -1,22 +1,15 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { Product } from '../models/product.model';
+import { Product, ProductQuery } from '@core/models/product.model';
 import { ApiResponse, Page } from '@core/models/api.model';
-import { API } from '@core/config/api-config';
-
-export interface ProductQuery {
-  limit: number;
-  offset: number;
-  category?: string;
-  search?: string;
-}
+import { API_BASE_URL } from '@core/config/api-config';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProductService {
-  private readonly baseUrl = `${API.baseUrl}/products`;
+  private readonly baseUrl = `${inject(API_BASE_URL)}/products`;
 
   constructor(private http: HttpClient) {}
 

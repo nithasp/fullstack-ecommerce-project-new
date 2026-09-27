@@ -1,19 +1,15 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { NavigationEnd, Router } from '@angular/router';
 import { catchError, EMPTY, filter, mergeMap, Subscription } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { QUIET_ERRORS } from '../../interceptors/auth.interceptor';
-import { API } from '../../config/api-config';
-
-export interface PageViewReport {
-  path: string;
-  page?: string;
-}
+import { API_BASE_URL } from '../../config/api-config';
+import { PageViewReport } from '../../models/activity.model';
 
 @Injectable({ providedIn: 'root' })
 export class PageViewService {
-  private readonly baseUrl = `${API.baseUrl}/page-views`;
+  private readonly baseUrl = `${inject(API_BASE_URL)}/page-views`;
 
   constructor(
     private http: HttpClient,

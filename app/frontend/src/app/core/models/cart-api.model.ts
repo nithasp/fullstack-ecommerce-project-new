@@ -1,4 +1,4 @@
-import { ProductType } from '@features/products/models/product.model';
+import { ProductType, Review } from './product.model';
 
 export interface CartApiItem {
   id: number;
@@ -18,7 +18,7 @@ export interface CartApiItem {
   productDescription: string | null;
   productPreviewImg: string[];
   productTypes: ProductType[];
-  productReviews: unknown[];
+  productReviews: Review[];
   productOverallRating: number;
   productStock: number;
   productIsActive: boolean;

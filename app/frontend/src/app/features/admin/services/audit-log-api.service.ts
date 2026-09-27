@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { AuditLog, AuditLogQuery } from '../models/audit-log.model';
 import { ApiResponse, Page } from '@core/models/api.model';
-import { API } from '@core/config/api-config';
+import { API_BASE_URL } from '@core/config/api-config';
 
 @Injectable({ providedIn: 'root' })
 export class AuditLogApiService {
-  private readonly baseUrl = `${API.baseUrl}/admin/audit-logs`;
+  private readonly baseUrl = `${inject(API_BASE_URL)}/admin/audit-logs`;
 
   constructor(private http: HttpClient) {}
 

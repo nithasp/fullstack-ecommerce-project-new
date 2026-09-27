@@ -8,13 +8,12 @@ import {
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, filter, switchMap, take, throwError } from 'rxjs';
+import { Observable, catchError, switchMap, throwError } from 'rxjs';
 
 import { AuthService } from '../services/auth/auth.service';
+import { TokenRefreshService } from '../services/auth/token-refresh.service';
 import { NotificationService } from '../services/ui/notification.service';
-
-let isRefreshing = false;
-const refreshTokenSubject = new BehaviorSubject<string | null>(null);
+import { ErrorContext } from '../models/http-error.model';
 
 export const QUIET_ERRORS = new HttpContextToken<boolean>(() => false);
 
@@ -31,17 +30,18 @@ function extractMessage(error: HttpErrorResponse): string {
 }
 
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
-  const authService = inject(AuthService);
-  const router = inject(Router);
-  const notification = inject(NotificationService);
+  const context: ErrorContext = {
+    authService: inject(AuthService),
+    tokenRefresh: inject(TokenRefreshService),
+    router: inject(Router),
+    notification: inject(NotificationService),
+  };
 
-  const token = isAuthEndpoint(req.url) ? null : authService.getAccessToken();
+  const token = isAuthEndpoint(req.url) ? null : context.authService.getAccessToken();
   const authReq = token ? addToken(req, token) : req;
 
   return next(authReq).pipe(
-    catchError((error: HttpErrorResponse) =>
-      handleError(error, authReq, next, authService, router, notification),
-    ),
+    catchError((error: HttpErrorResponse) => handleError(error, authReq, next, context)),
   );
 };
 
@@ -49,10 +49,10 @@ function handleError(
   error: HttpErrorResponse,
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
-  authService: AuthService,
-  router: Router,
-  notification: NotificationService,
+  context: ErrorContext,
 ): Observable<HttpEvent<unknown>> {
+  const { authService, router, notification } = context;
+
   if (req.context.get(QUIET_ERRORS) && error.error?.code !== 'token_expired') {
     return throwError(() => new Error(extractMessage(error)));
   }
@@ -67,7 +67,7 @@ function handleError(
       return throwError(() => new Error(extractMessage(error)));
     }
     if (error.error?.code === 'token_expired') {
-      return handle401Refresh(req, next, authService, router, notification);
+      return retryWithFreshToken(req, next, context);
     }
     authService.clearSession();
     notification.error('Your session is invalid. Please log in again.');
@@ -93,37 +93,20 @@ function handleError(
   return throwError(() => new Error(extractMessage(error)));
 }
 
-function handle401Refresh(
+function retryWithFreshToken(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
-  authService: AuthService,
-  router: Router,
-  notification: NotificationService,
+  context: ErrorContext,
 ): Observable<HttpEvent<unknown>> {
-  if (!isRefreshing) {
-    isRefreshing = true;
-    refreshTokenSubject.next(null);
+  const { authService, tokenRefresh, router, notification } = context;
 
-    return authService.refreshAccessToken().pipe(
-      switchMap((tokens) => {
-        isRefreshing = false;
-        refreshTokenSubject.next(tokens.accessToken);
-        return next(addToken(req, tokens.accessToken));
-      }),
-      catchError((err) => {
-        isRefreshing = false;
-        refreshTokenSubject.next(null);
-        authService.clearSession();
-        notification.error('Your session has expired. Please log in again.');
-        void router.navigate(['/auth/login']);
-        return throwError(() => err);
-      }),
-    );
-  }
-
-  return refreshTokenSubject.pipe(
-    filter((token): token is string => token !== null),
-    take(1),
+  return tokenRefresh.freshToken().pipe(
     switchMap((token) => next(addToken(req, token))),
+    catchError((err) => {
+      authService.clearSession();
+      notification.error('Your session has expired. Please log in again.');
+      void router.navigate(['/auth/login']);
+      return throwError(() => err);
+    }),
   );
 }

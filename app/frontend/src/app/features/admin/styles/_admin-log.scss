@@ -1,6 +1,6 @@
 // Layout, filters, table and pager shared by the Activity Log and Page views pages
-@import 'variables';
-@import 'mixins';
+@use 'variables' as *;
+@use 'mixins' as *;
 
 $badge-gray: #4b5563;
 $badge-slate: #475569;
@@ -320,13 +320,13 @@ $font-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace
       color: $color-primary;
     }
 
-    svg {
+    app-icon {
       width: 16px;
       height: 16px;
       transition: transform $transition-fast;
     }
 
-    &[aria-expanded='true'] svg {
+    &[aria-expanded='true'] app-icon {
       transform: rotate(180deg);
     }
   }

@@ -1,5 +1,5 @@
-@import 'variables';
-@import 'mixins';
+@use 'variables' as *;
+@use 'mixins' as *;
 
 .input-field {
   &__label {
@@ -67,7 +67,7 @@
     cursor: pointer;
     transition: color $transition-fast;
 
-    svg {
+    app-icon {
       width: 18px;
       height: 18px;
     }

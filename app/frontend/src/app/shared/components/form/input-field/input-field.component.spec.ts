@@ -2,6 +2,7 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InputFieldComponent } from './input-field.component';
+import { IconComponent } from '@shared/components/ui/icon/icon.component';
 
 // The component reads its state from the control it is bound to, so the tests drive a real one
 @Component({
@@ -40,7 +41,7 @@ describe('InputFieldComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule],
-      declarations: [InputFieldComponent, HostComponent],
+      declarations: [InputFieldComponent, HostComponent, IconComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HostComponent);
@@ -253,10 +254,12 @@ describe('InputFieldComponent', () => {
     });
 
     it('should swap the eye for the struck-through eye when revealed', () => {
-      expect(query('.input-field__toggle svg line')).toBeNull();
+      const icon = (): string => query('.input-field__toggle app-icon').style.getPropertyValue('--icon-src');
+
+      expect(icon()).toContain('ui/eye.svg');
       component.passwordShown = true;
       fixture.detectChanges();
-      expect(query('.input-field__toggle svg line')).toBeTruthy();
+      expect(icon()).toContain('ui/eye-off.svg');
     });
 
     it('should disable alongside the input', () => {

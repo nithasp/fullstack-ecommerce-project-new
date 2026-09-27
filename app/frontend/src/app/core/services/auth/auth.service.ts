@@ -6,6 +6,17 @@ import { AuthUser, AuthSession } from '../../models/auth.model';
 
 const USER_KEY = 'currentUser';
 
+/**
+ * JWT segments are base64**url**: `-` and `_` stand in for `+` and `/`, and the `=` padding is
+ * dropped. `atob` rejects both, so a plain `atob(segment)` throws on any token whose bytes happen
+ * to encode one of those characters — which reads as "expired" and forces a needless refresh.
+ */
+function decodeJwtSegment(segment: string): Record<string, unknown> {
+  const base64 = segment.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+  return JSON.parse(atob(padded)) as Record<string, unknown>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   /**
@@ -50,10 +61,10 @@ export class AuthService {
     try {
       const parts = token.split('.');
       if (parts.length !== 3) return false;
-      const header = JSON.parse(atob(parts[0]));
-      if (!header.alg || !header.typ) return false;
-      const payload = JSON.parse(atob(parts[1]));
-      return payload.exp * 1000 > Date.now();
+      const header = decodeJwtSegment(parts[0]);
+      if (!header['alg'] || !header['typ']) return false;
+      const exp = decodeJwtSegment(parts[1])['exp'];
+      return typeof exp === 'number' && exp * 1000 > Date.now();
     } catch {
       return false;
     }

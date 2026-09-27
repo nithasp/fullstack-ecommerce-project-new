@@ -1,19 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { debounceTime, Subject, Subscription } from 'rxjs';
-import { PageView, PageViewQuery } from '../models/page-view.model';
+import { PageView, PageViewFilters, PageViewQuery } from '../models/page-view.model';
 import { PageViewApiService } from '../services/page-view-api.service';
 import { localDayStart, USER_FILTER_DEBOUNCE_MS } from '../utils/admin-filters';
 import { trackById } from '@shared/utils/track-by';
 import { NotificationService } from '@core/services/ui/notification.service';
 
 export const PAGE_VIEWS_PAGE_SIZE = 25;
-
-export interface PageViewFilters {
-  user: string;
-  path: string;
-  from: string;
-  to: string;
-}
 
 const NO_FILTERS: PageViewFilters = { user: '', path: '', from: '', to: '' };
 

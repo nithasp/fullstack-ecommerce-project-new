@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { AddressEntry, AddressForm } from '../models/address.model';
 import { ApiResponse } from '@core/models/api.model';
-import { API } from '@core/config/api-config';
+import { API_BASE_URL } from '@core/config/api-config';
 
 @Injectable({ providedIn: 'root' })
 export class AddressApiService {
-  private readonly baseUrl = `${API.baseUrl}/addresses`;
+  private readonly baseUrl = `${inject(API_BASE_URL)}/addresses`;
 
   constructor(private http: HttpClient) {}
 

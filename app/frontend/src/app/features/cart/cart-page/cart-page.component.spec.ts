@@ -7,7 +7,7 @@ import { CartPageComponent } from './cart-page.component';
 import { CartService } from '@core/services/cart/cart.service';
 import { NotificationService } from '@core/services/ui/notification.service';
 import { InputFieldComponent } from '@shared/components/form/input-field/input-field.component';
-import { Product, CartItem } from '../../products/models/product.model';
+import { Product } from '@core/models/product.model';
 
 describe('CartPageComponent', () => {
   let component: CartPageComponent;
@@ -39,6 +39,9 @@ describe('CartPageComponent', () => {
     shopId: 'shop2',
     shopName: 'Another Shop',
   };
+
+  /** rebuildView() replaces the row objects, so the current one is always read back from the view. */
+  const firstRow = () => component.shopGroups[0].rows[0];
 
   beforeEach(async () => {
     notificationSpy = jasmine.createSpyObj('NotificationService', ['success', 'error', 'info', 'warning']);
@@ -72,26 +75,20 @@ describe('CartPageComponent', () => {
     expect(items.length).toBe(1);
   });
 
-  it('should calculate item price correctly', () => {
-    const item: CartItem = {
-      product: mockProduct,
-      quantity: 1,
-      selectedType: mockProduct.types[0],
-      shopId: 'shop1',
-      shopName: 'Test Shop',
-    };
-    expect(component.getItemPrice(item)).toBe(79.99);
+  it('should precompute the row price from the selected type', () => {
+    cartService.addToCartLocal(mockProduct, 1, mockProduct.types[0]);
+    expect(firstRow().price).toBe(79.99);
   });
 
-  it('should calculate item subtotal correctly', () => {
-    const item: CartItem = {
-      product: mockProduct,
-      quantity: 3,
-      selectedType: mockProduct.types[0],
-      shopId: 'shop1',
-      shopName: 'Test Shop',
-    };
-    expect(component.getItemSubtotal(item)).toBeCloseTo(239.97, 2);
+  it('should precompute the row subtotal from price and quantity', () => {
+    cartService.addToCartLocal(mockProduct, 3, mockProduct.types[0]);
+    expect(firstRow().subtotal).toBeCloseTo(239.97, 2);
+  });
+
+  it('should precompute the row stock and stock-limit flag', () => {
+    cartService.addToCartLocal(mockProduct, 50, mockProduct.types[0]);
+    expect(firstRow().stock).toBe(50);
+    expect(firstRow().atStockLimit).toBeTrue();
   });
 
   it('should group items by shop', () => {
@@ -116,9 +113,8 @@ describe('CartPageComponent', () => {
     cartService.addToCartLocal(mockProduct, 2, mockProduct.types[0]);
     fixture.detectChanges();
 
-    const item = component.cartItems[0];
-    component.toggleItem(item);
-    expect(component.isItemSelected(item)).toBeFalse();
+    component.toggleRow(firstRow());
+    expect(firstRow().selected).toBeFalse();
     expect(component.selectedCount).toBe(0);
   });
 
@@ -126,35 +122,57 @@ describe('CartPageComponent', () => {
     cartService.addToCartLocal(mockProduct, 1, mockProduct.types[0]);
     fixture.detectChanges();
 
-    const group = component.shopGroups[0];
-    component.toggleShop(group);
-    expect(component.isShopAllSelected(group)).toBeFalse();
+    component.toggleShop(component.shopGroups[0]);
+    expect(component.shopGroups[0].allSelected).toBeFalse();
 
-    component.toggleShop(group);
-    expect(component.isShopAllSelected(group)).toBeTrue();
+    component.toggleShop(component.shopGroups[0]);
+    expect(component.shopGroups[0].allSelected).toBeTrue();
+  });
+
+  it('should mark a shop indeterminate when only some of its rows are selected', () => {
+    cartService.addToCartLocal(mockProduct, 1, mockProduct.types[0]);
+    cartService.addToCartLocal({ ...mockProduct, id: 3 }, 1);
+    fixture.detectChanges();
+
+    component.toggleRow(component.shopGroups[0].rows[0]);
+    expect(component.shopGroups[0].indeterminate).toBeTrue();
+    expect(component.shopGroups[0].allSelected).toBeFalse();
   });
 
   it('should remove item from cart', () => {
     cartService.addToCartLocal(mockProduct, 1, mockProduct.types[0]);
     fixture.detectChanges();
-    const item: CartItem = {
-      product: mockProduct,
-      quantity: 1,
-      selectedType: mockProduct.types[0],
-      shopId: 'shop1',
-      shopName: 'Test Shop',
-    };
-    component.removeItem(item);
+
+    component.removeRow(firstRow());
     expect(component.cartItems.length).toBe(0);
     expect(notificationSpy.info).toHaveBeenCalled();
+  });
+
+  it('should refuse a quantity above the row stock', () => {
+    cartService.addToCartLocal(mockProduct, 1, mockProduct.types[0]);
+    fixture.detectChanges();
+
+    component.updateQuantity(firstRow(), 51);
+    expect(notificationSpy.warning).toHaveBeenCalled();
+    expect(firstRow().item.quantity).toBe(1);
+  });
+
+  it('should apply a discount to the selected total', () => {
+    cartService.addToCartLocal(mockProduct, 1, mockProduct.types[0]);
+    fixture.detectChanges();
+
+    component.discountCode = 'SAVE20';
+    component.applyDiscount();
+
+    expect(component.discountAmount).toBeCloseTo(15.998, 2);
+    expect(component.cartTotalAfterDiscount).toBeCloseTo(63.992, 2);
   });
 
   it('should prevent checkout with no selected items', () => {
     cartService.addToCartLocal(mockProduct, 1, mockProduct.types[0]);
     fixture.detectChanges();
 
-    const item = component.cartItems[0];
-    component.toggleItem(item);
+    component.toggleRow(firstRow());
     component.onProceedToCheckout();
     expect(notificationSpy.error).toHaveBeenCalledWith('Please select at least one item to checkout.');
   });

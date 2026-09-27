@@ -6,7 +6,8 @@ import { USER_FILTER_DEBOUNCE_MS } from '../utils/admin-filters';
 import { HumanizePipe } from '../pipes/humanize.pipe';
 import { AuditLogApiService } from '../services/audit-log-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
-import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '@shared/components/ui/loading-spinner/loading-spinner.component';
+import { IconComponent } from '@shared/components/ui/icon/icon.component';
 import { AuditLog, AuditLogQuery } from '../models/audit-log.model';
 
 describe('ActivityLogComponent', () => {
@@ -46,7 +47,7 @@ describe('ActivityLogComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [FormsModule],
-      declarations: [ActivityLogComponent, HumanizePipe, LoadingSpinnerComponent],
+      declarations: [ActivityLogComponent, HumanizePipe, LoadingSpinnerComponent, IconComponent],
       providers: [
         { provide: AuditLogApiService, useValue: apiSpy },
         { provide: NotificationService, useValue: notificationSpy },

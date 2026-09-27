@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs';
-import { Product } from '../models/product.model';
+import { Product } from '@core/models/product.model';
 import { ProductService } from '../services/product.service';
 import { NotificationService } from '@core/services/ui/notification.service';
 import { trackById, trackByValue } from '@shared/utils/track-by';

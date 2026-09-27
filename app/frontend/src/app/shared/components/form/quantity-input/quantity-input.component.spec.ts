@@ -1,5 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { QuantityInputComponent } from './quantity-input.component';
+import { IconComponent } from '@shared/components/ui/icon/icon.component';
 
 const DEBOUNCE_MS = 700;
 
@@ -28,7 +29,7 @@ describe('QuantityInputComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [QuantityInputComponent],
+      declarations: [QuantityInputComponent, IconComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(QuantityInputComponent);

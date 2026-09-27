@@ -1,4 +1,4 @@
-@import 'variables';
-@import 'mixins';
-@import 'base';
-@import 'animations';
+@forward 'variables';
+@forward 'mixins';
+@use 'base';
+@use 'animations';

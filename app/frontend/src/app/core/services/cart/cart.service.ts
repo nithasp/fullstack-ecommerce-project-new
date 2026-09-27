@@ -1,10 +1,14 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Subject } from 'rxjs';
-import { debounceTime, switchMap } from 'rxjs/operators';
-import { CartItem, Product, ProductType, Review } from '@features/products/models/product.model';
+import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
+import { catchError, debounceTime, groupBy, mergeMap, switchMap } from 'rxjs/operators';
+import { Product, ProductType } from '../../models/product.model';
+import { CartItem, QuantityUpdate } from '../../models/cart.model';
 import { CartApiService } from './cart-api.service';
 import { CartApiItem } from '../../models/cart-api.model';
-import { QuantityUpdate } from '../../models/cart.model';
+import { toCartItem } from './cart-item.mapper';
+import { cartItemKey, ItemLoadingStore } from './item-loading.store';
+
+export const QUANTITY_SYNC_DEBOUNCE_MS = 400;
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
@@ -15,68 +19,87 @@ export class CartService {
   private cartLoadingSubject = new BehaviorSubject<boolean>(false);
   isCartLoading$ = this.cartLoadingSubject.asObservable();
 
-  private loadingKeys = new Set<string>();
-  private loadingSubject = new BehaviorSubject<Set<string>>(new Set());
-  loading$ = this.loadingSubject.asObservable();
+  private readonly itemLoading = new ItemLoadingStore();
+  readonly loading$ = this.itemLoading.keys$;
+
+  /**
+   * The last quantity the server acknowledged, per row. A failed sync rolls back to this, not to
+   * the value the previous keystroke held — the server never saw that one either.
+   */
+  private readonly confirmedQuantities = new Map<string, number>();
 
   private quantityUpdate$ = new Subject<QuantityUpdate>();
 
   constructor(private cartApi: CartApiService) {
     this.quantityUpdate$
       .pipe(
-        debounceTime(400),
-        switchMap(({ cartItemId, quantity, itemKey }) => {
-          this.setLoading(itemKey, true);
-          return this.cartApi.updateItem(cartItemId, quantity);
-        }),
+        // One debounce per row. A single shared debounce dropped row A's update outright when row
+        // B was edited inside the window, leaving A showing a quantity the server never received.
+        groupBy((update) => update.itemKey),
+        mergeMap((row) =>
+          row.pipe(
+            debounceTime(QUANTITY_SYNC_DEBOUNCE_MS),
+            // Within one row the latest edit wins; catchError keeps a failure on one row from
+            // tearing down the stream that serves the others
+            switchMap((update) => {
+              this.itemLoading.start(update.itemKey);
+              return this.cartApi.updateItem(update.cartItemId, update.quantity).pipe(
+                catchError(() => {
+                  this.rollbackQuantity(update.itemKey);
+                  return EMPTY;
+                }),
+              );
+            }),
+          ),
+        ),
       )
-      .subscribe({
-        next: (updated) => {
-          const item = this.cartItems.find((i) => i.cartItemId === updated.id);
-          if (item) {
-            item.quantity = updated.quantity;
-            this.cartSubject.next([...this.cartItems]);
-          }
-          this.clearLoadingByCartItemId(updated.id);
-        },
-        error: () => {
-          this.loadingKeys.clear();
-          this.loadingSubject.next(new Set());
-        },
-      });
+      .subscribe((updated) => this.confirmQuantity(updated));
   }
 
-  private setLoading(key: string, loading: boolean): void {
-    if (loading) {
-      this.loadingKeys.add(key);
-    } else {
-      this.loadingKeys.delete(key);
-    }
-    this.loadingSubject.next(new Set(this.loadingKeys));
+  private keyOf(item: CartItem): string {
+    return cartItemKey(item.product.id, item.selectedType?._id);
   }
 
-  private clearLoadingByCartItemId(cartItemId: number): void {
-    const item = this.cartItems.find((i) => i.cartItemId === cartItemId);
-    if (item) {
-      this.setLoading(this.makeKey(item.product.id, item.selectedType?._id), false);
-    }
+  private findItem(productId: number, typeId?: string): CartItem | undefined {
+    return this.cartItems.find((item) => item.product.id === productId && item.selectedType?._id === typeId);
+  }
+
+  private emitCart(): void {
+    this.cartSubject.next([...this.cartItems]);
+  }
+
+  /** The server accepted this quantity, so it becomes what a later failure rolls back to. */
+  private confirmQuantity(updated: CartApiItem): void {
+    const item = this.cartItems.find((i) => i.cartItemId === updated.id);
+    if (!item) return;
+    const key = this.keyOf(item);
+    item.quantity = updated.quantity;
+    this.confirmedQuantities.set(key, updated.quantity);
+    this.itemLoading.finish(key);
+    this.emitCart();
+  }
+
+  private rollbackQuantity(key: string): void {
+    const item = this.cartItems.find((i) => this.keyOf(i) === key);
+    const confirmed = this.confirmedQuantities.get(key);
+    if (item && confirmed !== undefined) item.quantity = confirmed;
+    this.itemLoading.finish(key);
+    this.emitCart();
   }
 
   isItemLoading(productId: number, typeId?: string): boolean {
-    return this.loadingKeys.has(this.makeKey(productId, typeId));
-  }
-
-  private makeKey(productId: number, typeId?: string): string {
-    return `${productId}_${typeId ?? 'default'}`;
+    return this.itemLoading.has(cartItemKey(productId, typeId));
   }
 
   fetchCart(): void {
     this.cartLoadingSubject.next(true);
     this.cartApi.getCart().subscribe({
       next: (apiItems) => {
-        this.cartItems = apiItems.map((api) => this.apiItemToCartItem(api));
-        this.cartSubject.next([...this.cartItems]);
+        this.cartItems = apiItems.map(toCartItem);
+        this.confirmedQuantities.clear();
+        this.cartItems.forEach((item) => this.confirmedQuantities.set(this.keyOf(item), item.quantity));
         this.cartLoadingSubject.next(false);
+        this.emitCart();
       },
       error: () => {
         this.cartLoadingSubject.next(false);
@@ -86,187 +109,135 @@ export class CartService {
 
   resetCart(): void {
     this.cartItems = [];
-    this.cartSubject.next([]);
-    this.loadingKeys.clear();
-    this.loadingSubject.next(new Set());
+    this.confirmedQuantities.clear();
+    this.itemLoading.clear();
     this.cartLoadingSubject.next(false);
+    this.cartSubject.next([]);
   }
 
-  private apiItemToCartItem(api: CartApiItem): CartItem {
-    const product: Product = {
-      id: api.productId,
-      name: api.productName ?? '',
-      category: api.productCategory ?? '',
-      price: api.productPrice ?? '0',
-      image: api.productImage ?? '',
-      description: api.productDescription ?? '',
-      previewImg: api.productPreviewImg ?? [],
-      types: api.productTypes ?? [],
-      reviews: (api.productReviews ?? []) as Review[],
-      overallRating: api.productOverallRating ?? 0,
-      stock: api.productStock,
-      isActive: api.productIsActive,
-      shopId: api.productShopId ?? undefined,
-      shopName: api.productShopName ?? undefined,
-    };
-
-    return {
-      cartItemId: api.id,
+  private addLocally(product: Product, quantity: number, selectedType?: ProductType): CartItem {
+    const existing = this.findItem(product.id, selectedType?._id);
+    if (existing) {
+      existing.quantity += quantity;
+      return existing;
+    }
+    const added: CartItem = {
       product,
-      quantity: api.quantity,
-      selectedType: api.selectedType ?? undefined,
-      shopId: api.shopId ?? product.shopId ?? '',
-      shopName: api.shopName ?? product.shopName ?? '',
+      quantity,
+      selectedType,
+      shopId: product.shopId ?? '',
+      shopName: product.shopName ?? '',
     };
+    this.cartItems.push(added);
+    return added;
+  }
+
+  private dropLocally(productId: number, typeId?: string): void {
+    this.cartItems = this.cartItems.filter(
+      (item) => !(item.product.id === productId && item.selectedType?._id === typeId),
+    );
+    this.confirmedQuantities.delete(cartItemKey(productId, typeId));
   }
 
   addToCartLocal(product: Product, quantity: number, selectedType?: ProductType): void {
-    const existingIndex = this.cartItems.findIndex(
-      (item) => item.product.id === product.id && item.selectedType?._id === selectedType?._id,
-    );
-    if (existingIndex > -1) {
-      this.cartItems[existingIndex].quantity += quantity;
-    } else {
-      this.cartItems.push({
-        product,
-        quantity,
-        selectedType,
-        shopId: product.shopId ?? '',
-        shopName: product.shopName ?? '',
-      });
-    }
-    this.cartSubject.next([...this.cartItems]);
+    this.addLocally(product, quantity, selectedType);
+    this.emitCart();
   }
 
   syncToBackend(product: Product, selectedType?: ProductType): void {
-    const key = this.makeKey(product.id, selectedType?._id);
-    const item = this.cartItems.find(
-      (i) => i.product.id === product.id && i.selectedType?._id === selectedType?._id,
-    );
+    const key = cartItemKey(product.id, selectedType?._id);
+    const item = this.findItem(product.id, selectedType?._id);
     if (!item) return;
 
-    this.setLoading(key, true);
+    this.itemLoading.start(key);
 
     if (item.cartItemId) {
       this.cartApi.updateItem(item.cartItemId, item.quantity).subscribe({
-        next: (updated) => {
-          item.quantity = updated.quantity;
-          this.cartSubject.next([...this.cartItems]);
-          this.setLoading(key, false);
-        },
-        error: () => this.setLoading(key, false),
+        next: (updated) => this.confirmQuantity(updated),
+        error: () => this.rollbackQuantity(key),
       });
-    } else {
-      this.cartApi
-        .addItem({
-          productId: product.id,
-          quantity: item.quantity,
-          typeId: selectedType?._id ?? null,
-        })
-        .subscribe({
-          next: (apiItem) => {
-            item.cartItemId = apiItem.id;
-            item.quantity = apiItem.quantity;
-            this.cartSubject.next([...this.cartItems]);
-            this.setLoading(key, false);
-          },
-          error: () => {
-            this.cartItems = this.cartItems.filter(
-              (i) => !(i.product.id === product.id && i.selectedType?._id === selectedType?._id),
-            );
-            this.cartSubject.next([...this.cartItems]);
-            this.setLoading(key, false);
-          },
-        });
+      return;
     }
+
+    this.cartApi
+      .addItem({ productId: product.id, quantity: item.quantity, typeId: selectedType?._id ?? null })
+      .subscribe({
+        next: (apiItem) => {
+          item.cartItemId = apiItem.id;
+          item.quantity = apiItem.quantity;
+          this.confirmedQuantities.set(key, apiItem.quantity);
+          this.itemLoading.finish(key);
+          this.emitCart();
+        },
+        error: () => {
+          this.dropLocally(product.id, selectedType?._id);
+          this.itemLoading.finish(key);
+          this.emitCart();
+        },
+      });
   }
 
   addToCart(product: Product, quantity: number, selectedType?: ProductType): void {
-    const key = this.makeKey(product.id, selectedType?._id);
-    const existingIndex = this.cartItems.findIndex(
-      (item) => item.product.id === product.id && item.selectedType?._id === selectedType?._id,
-    );
+    const key = cartItemKey(product.id, selectedType?._id);
+    const existed = !!this.findItem(product.id, selectedType?._id);
+    this.addLocally(product, quantity, selectedType);
+    this.emitCart();
 
-    if (existingIndex > -1) {
-      this.cartItems[existingIndex].quantity += quantity;
-    } else {
-      this.cartItems.push({
-        product,
-        quantity,
-        selectedType,
-        shopId: product.shopId ?? '',
-        shopName: product.shopName ?? '',
-      });
-    }
-    this.cartSubject.next([...this.cartItems]);
-
-    this.setLoading(key, true);
-    this.cartApi
-      .addItem({
-        productId: product.id,
-        quantity,
-        typeId: selectedType?._id ?? null,
-      })
-      .subscribe({
-        next: (apiItem) => {
-          const item = this.cartItems.find(
-            (i) => i.product.id === product.id && i.selectedType?._id === selectedType?._id,
-          );
-          if (item) {
-            item.cartItemId = apiItem.id;
-            item.quantity = apiItem.quantity;
-            this.cartSubject.next([...this.cartItems]);
-          }
-          this.setLoading(key, false);
-        },
-        error: () => {
-          if (existingIndex > -1) {
-            this.cartItems[existingIndex].quantity -= quantity;
-          } else {
-            this.cartItems = this.cartItems.filter(
-              (i) => !(i.product.id === product.id && i.selectedType?._id === selectedType?._id),
-            );
-          }
-          this.cartSubject.next([...this.cartItems]);
-          this.setLoading(key, false);
-        },
-      });
+    this.itemLoading.start(key);
+    this.cartApi.addItem({ productId: product.id, quantity, typeId: selectedType?._id ?? null }).subscribe({
+      next: (apiItem) => {
+        const item = this.findItem(product.id, selectedType?._id);
+        if (item) {
+          item.cartItemId = apiItem.id;
+          item.quantity = apiItem.quantity;
+          this.confirmedQuantities.set(key, apiItem.quantity);
+        }
+        this.itemLoading.finish(key);
+        this.emitCart();
+      },
+      error: () => {
+        const item = this.findItem(product.id, selectedType?._id);
+        if (existed && item) {
+          item.quantity -= quantity;
+        } else {
+          this.dropLocally(product.id, selectedType?._id);
+        }
+        this.itemLoading.finish(key);
+        this.emitCart();
+      },
+    });
   }
 
   removeFromCart(productId: number, typeId?: string): void {
-    const key = this.makeKey(productId, typeId);
-    const item = this.cartItems.find((i) => i.product.id === productId && i.selectedType?._id === typeId);
+    const key = cartItemKey(productId, typeId);
+    const item = this.findItem(productId, typeId);
     if (!item) return;
 
-    this.setLoading(key, true);
-
-    if (item.cartItemId) {
-      this.cartApi.removeItem(item.cartItemId).subscribe({
-        next: () => {
-          this.cartItems = this.cartItems.filter(
-            (i) => !(i.product.id === productId && i.selectedType?._id === typeId),
-          );
-          this.cartSubject.next([...this.cartItems]);
-          this.setLoading(key, false);
-        },
-        error: () => this.setLoading(key, false),
-      });
-    } else {
-      this.cartItems = this.cartItems.filter(
-        (i) => !(i.product.id === productId && i.selectedType?._id === typeId),
-      );
-      this.cartSubject.next([...this.cartItems]);
-      this.setLoading(key, false);
+    if (!item.cartItemId) {
+      this.dropLocally(productId, typeId);
+      this.itemLoading.finish(key);
+      this.emitCart();
+      return;
     }
+
+    this.itemLoading.start(key);
+    this.cartApi.removeItem(item.cartItemId).subscribe({
+      next: () => {
+        this.dropLocally(productId, typeId);
+        this.itemLoading.finish(key);
+        this.emitCart();
+      },
+      error: () => this.itemLoading.finish(key),
+    });
   }
 
   updateQuantity(productId: number, quantity: number, typeId?: string): void {
-    const key = this.makeKey(productId, typeId);
-    const item = this.cartItems.find((i) => i.product.id === productId && i.selectedType?._id === typeId);
+    const key = cartItemKey(productId, typeId);
+    const item = this.findItem(productId, typeId);
     if (!item) return;
 
     item.quantity = Math.max(1, quantity);
-    this.cartSubject.next([...this.cartItems]);
+    this.emitCart();
 
     if (item.cartItemId) {
       this.quantityUpdate$.next({ cartItemId: item.cartItemId, quantity: item.quantity, itemKey: key });
@@ -277,6 +248,7 @@ export class CartService {
     this.cartApi.clearCart().subscribe({
       next: () => {
         this.cartItems = [];
+        this.confirmedQuantities.clear();
         this.cartSubject.next([]);
       },
     });

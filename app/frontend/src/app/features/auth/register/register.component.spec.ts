@@ -4,7 +4,8 @@ import { provideRouter, Router } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { RegisterComponent } from './register.component';
 import { InputFieldComponent } from '@shared/components/form/input-field/input-field.component';
-import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '@shared/components/ui/loading-spinner/loading-spinner.component';
+import { IconComponent } from '@shared/components/ui/icon/icon.component';
 import { AuthService } from '@core/services/auth/auth.service';
 import { NotificationService } from '@core/services/ui/notification.service';
 import { AuthSession, AuthUser } from '@core/models/auth.model';
@@ -38,7 +39,7 @@ describe('RegisterComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule],
-      declarations: [RegisterComponent, InputFieldComponent, LoadingSpinnerComponent],
+      declarations: [RegisterComponent, InputFieldComponent, LoadingSpinnerComponent, IconComponent],
       providers: [
         provideRouter([]),
         {

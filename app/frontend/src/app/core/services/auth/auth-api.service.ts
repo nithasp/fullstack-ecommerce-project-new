@@ -1,16 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { AuthUser, AuthSession } from '../../models/auth.model';
 import { ApiResponse } from '../../models/api.model';
-import { API } from '../../config/api-config';
+import { API_BASE_URL } from '../../config/api-config';
 
 // The refresh cookie only travels on calls that send credentials
 const WITH_COOKIE = { withCredentials: true };
 
 @Injectable({ providedIn: 'root' })
 export class AuthApiService {
-  private readonly baseUrl = `${API.baseUrl}/auth`;
+  private readonly baseUrl = `${inject(API_BASE_URL)}/auth`;
 
   constructor(private http: HttpClient) {}
 

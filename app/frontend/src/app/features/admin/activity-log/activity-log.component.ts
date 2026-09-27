@@ -1,23 +1,19 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { debounceTime, Subject, Subscription } from 'rxjs';
-import { AUDIT_ACTIONS, AuditAction, AuditLog, AuditLogQuery, AuditResult } from '../models/audit-log.model';
+import {
+  ActivityFilters,
+  AUDIT_ACTIONS,
+  AuditAction,
+  AuditLog,
+  AuditLogQuery,
+  TypeToggle,
+} from '../models/audit-log.model';
 import { AuditLogApiService } from '../services/audit-log-api.service';
 import { localDayStart, USER_FILTER_DEBOUNCE_MS } from '../utils/admin-filters';
 import { trackById, trackByValue } from '@shared/utils/track-by';
 import { NotificationService } from '@core/services/ui/notification.service';
 
 export const ACTIVITY_PAGE_SIZE = 25;
-
-export interface ActivityFilters {
-  user: string;
-  action: AuditAction | '';
-  result: AuditResult | '';
-  from: string;
-  to: string;
-  showApiReads: boolean;
-}
-
-export type TypeToggle = 'showApiReads';
 
 const NO_FILTERS: ActivityFilters = {
   user: '',

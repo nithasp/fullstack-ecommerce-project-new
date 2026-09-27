@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { CartApiItem, AddCartItemPayload, CheckoutResponse } from '../../models/cart-api.model';
 import { ApiResponse } from '../../models/api.model';
-import { API } from '../../config/api-config';
+import { API_BASE_URL } from '../../config/api-config';
 
 @Injectable({ providedIn: 'root' })
 export class CartApiService {
-  private readonly baseUrl = `${API.baseUrl}/cart`;
+  private readonly baseUrl = `${inject(API_BASE_URL)}/cart`;
 
   constructor(private http: HttpClient) {}
 

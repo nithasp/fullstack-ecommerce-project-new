@@ -1,5 +1,5 @@
-@import 'variables';
-@import 'mixins';
+@use 'variables' as *;
+@use 'mixins' as *;
 
 .auth-page {
   @include flex-center;
@@ -26,7 +26,7 @@
     background: $color-primary-bg;
     border-radius: $border-radius-full;
 
-    svg {
+    app-icon {
       width: 28px;
       height: 28px;
       color: $color-primary;

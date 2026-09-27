@@ -10,7 +10,7 @@ import { TruncatePipe } from '@shared/pipes/truncate.pipe';
 import { ProductService } from '../services/product.service';
 import { CartService } from '@core/services/cart/cart.service';
 import { NotificationService } from '@core/services/ui/notification.service';
-import { Product } from '../models/product.model';
+import { Product } from '@core/models/product.model';
 
 describe('ProductListComponent', () => {
   let component: ProductListComponent;

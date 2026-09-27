@@ -1,5 +1,5 @@
-@import 'variables';
-@import 'mixins';
+@use 'variables' as *;
+@use 'mixins' as *;
 
 .address-dialog-overlay {
   position: fixed;
@@ -58,6 +58,11 @@
     display: flex;
     align-items: center;
     transition: color $transition-fast;
+
+    app-icon {
+      width: 18px;
+      height: 18px;
+    }
 
     &:hover {
       color: $color-text;
@@ -125,6 +130,11 @@
     @include button-base;
     width: 100%;
     padding: $spacing-md;
+
+    app-icon {
+      width: 16px;
+      height: 16px;
+    }
     border: 1px solid $color-primary;
     border-radius: $border-radius-md;
     color: $color-primary;

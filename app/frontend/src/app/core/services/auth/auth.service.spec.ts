@@ -12,6 +12,18 @@ function jwt(expSeconds: number): string {
   return `${header}.${payload}.signature`;
 }
 
+/** Encoded the way a real issuer does it: base64url, with the `=` padding stripped. */
+function base64UrlJwt(expSeconds: number): string {
+  const encode = (value: object): string =>
+    btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+  // `~?>>` and `??~` encode to bytes that land on base64 62 and 63, i.e. `+` and `/` before the
+  // base64url swap, so the resulting segments genuinely contain `-` and `_`
+  const header = encode({ alg: 'HS256', typ: 'JWT', kid: '~?>>' });
+  const payload = encode({ exp: expSeconds, iss: '??~' });
+  return `${header}.${payload}.signature`;
+}
+
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
@@ -156,6 +168,43 @@ describe('AuthService', () => {
       httpMock
         .expectOne(`${API}/login`)
         .flush({ status: 200, message: 'ok', data: { ...mockSession, accessToken: jwt(1000000000) } });
+
+      expect(service.hasValidToken()).toBeFalse();
+    });
+
+    it('hasValidToken should accept a base64url payload containing - and _', () => {
+      // A real JWT is base64url, so its segments can hold `-` and `_`. `atob` rejects both, and the
+      // throw was swallowed as "invalid" — a live token read as expired and forced a refresh.
+      const token = base64UrlJwt(9999999999);
+      expect(token).toMatch(/[-_]/);
+
+      service.login('u', 'p').subscribe();
+      httpMock
+        .expectOne(`${API}/login`)
+        .flush({ status: 200, message: 'ok', data: { ...mockSession, accessToken: token } });
+
+      expect(service.hasValidToken()).toBeTrue();
+    });
+
+    it('hasValidToken should return false for a token that is not three segments', () => {
+      service.login('u', 'p').subscribe();
+      httpMock
+        .expectOne(`${API}/login`)
+        .flush({ status: 200, message: 'ok', data: { ...mockSession, accessToken: 'not.ajwt' } });
+
+      expect(service.hasValidToken()).toBeFalse();
+    });
+
+    it('hasValidToken should return false when the payload carries no exp', () => {
+      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+      const payload = btoa(JSON.stringify({ sub: 'nobody' }));
+
+      service.login('u', 'p').subscribe();
+      httpMock.expectOne(`${API}/login`).flush({
+        status: 200,
+        message: 'ok',
+        data: { ...mockSession, accessToken: `${header}.${payload}.sig` },
+      });
 
       expect(service.hasValidToken()).toBeFalse();
     });

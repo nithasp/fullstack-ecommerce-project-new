@@ -1,19 +1,20 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { combineLatest, Subscription } from 'rxjs';
-import { CartItem } from '../../products/models/product.model';
+import { Subscription, combineLatest } from 'rxjs';
+import { CartItem } from '@core/models/cart.model';
 import { CartService } from '@core/services/cart/cart.service';
 import { CartApiService } from '@core/services/cart/cart-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
 import { AddressApiService } from '../services/address-api.service';
 import { AddressEntry } from '../models/address.model';
-import { PaymentMethod, ShopGroup } from '../models/cart.model';
+import { CartRow, PaymentMethod, ShopGroup } from '../models/cart.model';
 import { trackById } from '@shared/utils/track-by';
 
 @Component({
   selector: 'app-cart-page',
   templateUrl: './cart-page.component.html',
   styleUrl: './cart-page.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CartPageComponent implements OnInit, OnDestroy {
   cartItems: CartItem[] = [];
@@ -54,13 +55,20 @@ export class CartPageComponent implements OnInit, OnDestroy {
   discountSuccess = '';
   discountError = '';
 
+  // Totals, recomputed whenever the cart, the selection or the discount changes rather than read
+  // through getters the template would re-run on every change-detection pass
+  selectedCount = 0;
+  selectedTotal = 0;
+  discountAmount = 0;
+  cartTotalAfterDiscount = 0;
+
   private readonly MOCK_CODES: Record<string, number> = {
     '10%OFF': 0.1,
     SAVE20: 0.2,
   };
 
-  private cartSub!: Subscription;
-  private _initializedKeys = new Set<string>();
+  private readonly subscriptions = new Subscription();
+  private initializedKeys = new Set<string>();
 
   constructor(
     public cartService: CartService,
@@ -68,26 +76,46 @@ export class CartPageComponent implements OnInit, OnDestroy {
     private addressApi: AddressApiService,
     private notificationService: NotificationService,
     private router: Router,
+    private cdr: ChangeDetectorRef,
   ) {}
+
+  readonly trackById = trackById;
+
+  trackByRowKey(_index: number, row: CartRow): string {
+    return row.key;
+  }
+
+  trackByShopId(_index: number, group: ShopGroup): string {
+    return group.shopId;
+  }
 
   ngOnInit(): void {
     this.fetchAddresses();
 
-    this.cartSub = combineLatest([this.cartService.cart$, this.cartService.isCartLoading$]).subscribe(
-      ([items, loading]) => {
-        this.isLoadingCart = loading;
-        this.cartItems = items;
-        items.forEach((item) => {
-          const key = this.getItemKey(item);
-          if (!this.selectedKeys.has(key) && !this._initializedKeys.has(key)) {
-            this.selectedKeys.add(key);
-          }
-          this._initializedKeys.add(key);
-        });
-        this.cleanUpRemovedKeys();
-        this.rebuildShopGroups();
-      },
+    this.subscriptions.add(
+      combineLatest([this.cartService.cart$, this.cartService.isCartLoading$]).subscribe(
+        ([items, loading]) => {
+          this.isLoadingCart = loading;
+          this.cartItems = items;
+          items.forEach((item) => {
+            const key = this.getItemKey(item);
+            if (!this.selectedKeys.has(key) && !this.initializedKeys.has(key)) {
+              this.selectedKeys.add(key);
+            }
+            this.initializedKeys.add(key);
+          });
+          this.cleanUpRemovedKeys();
+          this.rebuildView();
+        },
+      ),
     );
+
+    // A row's spinner comes from the in-flight set, which changes independently of the cart itself
+    this.subscriptions.add(this.cartService.loading$.subscribe(() => this.rebuildView()));
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   private fetchAddresses(): void {
@@ -100,9 +128,11 @@ export class CartPageComponent implements OnInit, OnDestroy {
           const def = list.find((a) => a.isDefault) ?? list[0];
           this.selectedAddressId = def.id;
         }
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoadingAddresses = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -116,137 +146,113 @@ export class CartPageComponent implements OnInit, OnDestroy {
     for (const key of this.selectedKeys) {
       if (!currentKeys.has(key)) this.selectedKeys.delete(key);
     }
-    for (const key of this._initializedKeys) {
-      if (!currentKeys.has(key)) this._initializedKeys.delete(key);
+    for (const key of this.initializedKeys) {
+      if (!currentKeys.has(key)) this.initializedKeys.delete(key);
     }
   }
 
-  ngOnDestroy(): void {
-    this.cartSub.unsubscribe();
-  }
-
-  readonly trackById = trackById;
-
   // The cart row has no id of its own until the server gives it one, so the product and the
   // chosen option identify it
-  trackByItemKey = (_index: number, item: CartItem): string => this.getItemKey(item);
-
-  trackByShopId(_index: number, group: ShopGroup): string {
-    return group.shopId;
-  }
-
   getItemKey(item: CartItem): string {
     return `${item.product.id}_${item.selectedType?._id ?? 'default'}`;
   }
 
-  isItemLoading(item: CartItem): boolean {
-    return this.cartService.isItemLoading(item.product.id, item.selectedType?._id);
-  }
+  /** The single place the view is derived from the cart, the selection and the in-flight set. */
+  private rebuildView(): void {
+    const groups = new Map<string, ShopGroup>();
 
-  private rebuildShopGroups(): void {
-    const groupMap = new Map<string, ShopGroup>();
     for (const item of this.cartItems) {
-      const id = item.shopId || item.product.shopId || 'unknown';
+      const shopId = item.shopId || item.product.shopId || 'unknown';
       const shopName = item.shopName || item.product.shopName || 'Unknown Shop';
-      if (!groupMap.has(id)) {
-        groupMap.set(id, { shopId: id, shopName, items: [] });
+      if (!groups.has(shopId)) {
+        groups.set(shopId, { shopId, shopName, rows: [], allSelected: false, indeterminate: false });
       }
-      groupMap.get(id)!.items.push(item);
+      groups.get(shopId)!.rows.push(this.toRow(item));
     }
-    this.shopGroups = Array.from(groupMap.values());
+
+    this.shopGroups = Array.from(groups.values()).map((group) => {
+      const selected = group.rows.filter((row) => row.selected).length;
+      return {
+        ...group,
+        allSelected: selected === group.rows.length,
+        indeterminate: selected > 0 && selected < group.rows.length,
+      };
+    });
+
+    this.recomputeTotals();
+    this.cdr.markForCheck();
   }
 
-  isItemSelected(item: CartItem): boolean {
-    return this.selectedKeys.has(this.getItemKey(item));
+  private toRow(item: CartItem): CartRow {
+    const price = item.selectedType?.price ?? Number(item.product.price);
+    const stock = item.selectedType?.stock ?? item.product.stock ?? 99;
+    return {
+      item,
+      key: this.getItemKey(item),
+      price,
+      subtotal: price * item.quantity,
+      stock,
+      selected: this.selectedKeys.has(this.getItemKey(item)),
+      loading: this.cartService.isItemLoading(item.product.id, item.selectedType?._id),
+      atStockLimit: item.quantity >= stock,
+    };
   }
 
-  toggleItem(item: CartItem): void {
-    const key = this.getItemKey(item);
-    if (this.selectedKeys.has(key)) {
-      this.selectedKeys.delete(key);
-    } else {
-      this.selectedKeys.add(key);
-    }
+  private recomputeTotals(): void {
+    const selected = this.cartItems.filter((item) => this.selectedKeys.has(this.getItemKey(item)));
+    this.selectedCount = selected.reduce((count, item) => count + item.quantity, 0);
+    this.selectedTotal = selected.reduce(
+      (total, item) => total + (item.selectedType?.price ?? Number(item.product.price)) * item.quantity,
+      0,
+    );
+    this.discountAmount = this.selectedTotal * this.appliedDiscount;
+    this.cartTotalAfterDiscount = this.selectedTotal - this.discountAmount;
   }
 
-  isShopAllSelected(group: ShopGroup): boolean {
-    return group.items.every((item) => this.selectedKeys.has(this.getItemKey(item)));
-  }
-
-  isShopIndeterminate(group: ShopGroup): boolean {
-    const count = group.items.filter((item) => this.selectedKeys.has(this.getItemKey(item))).length;
-    return count > 0 && count < group.items.length;
-  }
-
-  toggleShop(group: ShopGroup): void {
-    const allSelected = this.isShopAllSelected(group);
-    for (const item of group.items) {
-      const key = this.getItemKey(item);
-      if (allSelected) {
-        this.selectedKeys.delete(key);
-      } else {
-        this.selectedKeys.add(key);
-      }
-    }
-  }
-
-  get selectedItems(): CartItem[] {
+  private get selectedItems(): CartItem[] {
     return this.cartItems.filter((item) => this.selectedKeys.has(this.getItemKey(item)));
   }
 
-  get selectedTotal(): number {
-    return this.selectedItems.reduce((total, item) => total + this.getItemSubtotal(item), 0);
+  toggleRow(row: CartRow): void {
+    if (this.selectedKeys.has(row.key)) {
+      this.selectedKeys.delete(row.key);
+    } else {
+      this.selectedKeys.add(row.key);
+    }
+    this.rebuildView();
   }
 
-  get selectedCount(): number {
-    return this.selectedItems.reduce((count, item) => count + item.quantity, 0);
-  }
-
-  get cartTotal(): number {
-    return this.selectedTotal;
-  }
-  get cartCount(): number {
-    return this.selectedCount;
-  }
-  get discountAmount(): number {
-    return this.cartTotal * this.appliedDiscount;
-  }
-  get cartTotalAfterDiscount(): number {
-    return this.cartTotal - this.discountAmount;
+  toggleShop(group: ShopGroup): void {
+    const allSelected = group.allSelected;
+    for (const row of group.rows) {
+      if (allSelected) {
+        this.selectedKeys.delete(row.key);
+      } else {
+        this.selectedKeys.add(row.key);
+      }
+    }
+    this.rebuildView();
   }
 
   get selectedAddress(): AddressEntry | undefined {
     return this.addresses.find((a) => a.id === this.selectedAddressId);
   }
 
-  getItemPrice(item: CartItem): number {
-    return item.selectedType?.price ?? Number(item.product.price);
-  }
-
-  getItemSubtotal(item: CartItem): number {
-    return this.getItemPrice(item) * item.quantity;
-  }
-
-  getItemStock(item: CartItem): number {
-    return item.selectedType?.stock ?? item.product.stock ?? 99;
-  }
-
-  updateQuantity(item: CartItem, quantity: number): void {
-    const maxStock = this.getItemStock(item);
-    if (quantity > maxStock) {
+  updateQuantity(row: CartRow, quantity: number): void {
+    if (quantity > row.stock) {
       this.notificationService.warning(
-        `Only ${maxStock} ${maxStock === 1 ? 'item' : 'items'} available in stock. Quantity cannot exceed the available stock.`,
+        `Only ${row.stock} ${row.stock === 1 ? 'item' : 'items'} available in stock. Quantity cannot exceed the available stock.`,
         'Stock Limit Reached',
       );
       return;
     }
-    this.cartService.updateQuantity(item.product.id, quantity, item.selectedType?._id);
+    this.cartService.updateQuantity(row.item.product.id, quantity, row.item.selectedType?._id);
   }
 
-  removeItem(item: CartItem): void {
-    if (this.isItemLoading(item)) return;
-    this.cartService.removeFromCart(item.product.id, item.selectedType?._id);
-    this.notificationService.info(`${item.product.name} removed from cart`);
+  removeRow(row: CartRow): void {
+    if (row.loading) return;
+    this.cartService.removeFromCart(row.item.product.id, row.item.selectedType?._id);
+    this.notificationService.info(`${row.item.product.name} removed from cart`);
   }
 
   applyDiscount(): void {
@@ -268,6 +274,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
       this.appliedDiscount = 0;
       this.discountLabel = '';
     }
+    this.recomputeTotals();
   }
 
   useHintCode(code: string): void {
@@ -280,6 +287,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
     this.discountCode = '';
     this.discountSuccess = '';
     this.discountError = '';
+    this.recomputeTotals();
   }
 
   onProceedToCheckout(): void {
@@ -310,11 +318,13 @@ export class CartPageComponent implements OnInit, OnDestroy {
         this.cartService.fetchCart();
         this.isCheckingOut = false;
         this.notificationService.success('Order placed successfully!', 'Thank You');
+        this.cdr.markForCheck();
         void this.router.navigate(['/cart/confirmation']);
       },
       error: (err: Error) => {
         this.isCheckingOut = false;
         this.notificationService.error(err?.message || 'Checkout failed. Please try again.');
+        this.cdr.markForCheck();
       },
     });
   }

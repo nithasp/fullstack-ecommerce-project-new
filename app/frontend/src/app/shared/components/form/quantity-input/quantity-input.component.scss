@@ -1,5 +1,5 @@
-@import 'variables';
-@import 'mixins';
+@use 'variables' as *;
+@use 'mixins' as *;
 
 .qty-input {
   display: inline-flex;
@@ -32,6 +32,11 @@
       background $transition-fast,
       color $transition-fast;
     flex-shrink: 0;
+
+    app-icon {
+      width: 14px;
+      height: 14px;
+    }
 
     &:hover:not(:disabled) {
       background: $color-primary-bg;

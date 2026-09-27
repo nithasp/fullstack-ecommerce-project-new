@@ -43,3 +43,16 @@ export interface AuditLogQuery {
   from?: string;
   to?: string;
 }
+
+/** The state of the activity log's filter bar, before it is turned into an AuditLogQuery. */
+export interface ActivityFilters {
+  user: string;
+  action: AuditAction | '';
+  result: AuditResult | '';
+  from: string;
+  to: string;
+  showApiReads: boolean;
+}
+
+/** The boolean filters the toolbar flips; a named key keeps the template off index signatures. */
+export type TypeToggle = 'showApiReads';

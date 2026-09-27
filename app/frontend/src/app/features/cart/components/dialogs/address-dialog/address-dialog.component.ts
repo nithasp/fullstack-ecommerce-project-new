@@ -1,12 +1,10 @@
 import {
   Component,
-  ElementRef,
   EventEmitter,
   HostListener,
   inject,
   Input,
   OnChanges,
-  OnDestroy,
   OnInit,
   Output,
   SimpleChanges,
@@ -24,7 +22,7 @@ import { ConfirmDialogService } from '@core/services/ui/confirm-dialog.service';
   templateUrl: './address-dialog.component.html',
   styleUrl: './address-dialog.component.scss',
 })
-export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
+export class AddressDialogComponent implements OnInit, OnChanges {
   @Input() selectedAddressId: number | null = null;
 
   @Output() selectedAddressIdChange = new EventEmitter<number | null>();
@@ -58,31 +56,21 @@ export class AddressDialogComponent implements OnInit, OnChanges, OnDestroy {
   localSelectedId: number | null = null;
 
   constructor(
-    private elementRef: ElementRef<HTMLElement>,
     private notificationService: NotificationService,
     private addressApi: AddressApiService,
     private confirmDialog: ConfirmDialogService,
   ) {}
 
   ngOnInit(): void {
-    document.body.appendChild(this.elementRef.nativeElement);
     this.loadAddresses();
   }
 
-  ngOnDestroy(): void {
-    const el = this.elementRef.nativeElement;
-    if (el.parentNode) {
-      el.parentNode.removeChild(el);
-    }
-  }
-
+  // A new selection from the parent means the dialog is showing a different address than the form
+  // was opened against, so it drops back to the list rather than keeping a half-edited form
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['selectedAddressId']) {
-      this.localSelectedId = this.selectedAddressId;
-    }
-    this.dialogMode = 'list';
-    this.editingAddressId = null;
-    this.form.reset();
+    if (!changes['selectedAddressId']) return;
+    this.localSelectedId = this.selectedAddressId;
+    this.backToList();
   }
 
   private loadAddresses(emitChange = false): void {

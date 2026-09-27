@@ -4,11 +4,12 @@ import { CommonModule } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { BehaviorSubject, of } from 'rxjs';
 import { NavbarComponent } from './navbar.component';
+import { IconComponent } from '@shared/components/ui/icon/icon.component';
 import { CartService } from '@core/services/cart/cart.service';
 import { AuthService } from '@core/services/auth/auth.service';
 import { NotificationService } from '@core/services/ui/notification.service';
 import { AuthUser } from '@core/models/auth.model';
-import { Product } from '@features/products/models/product.model';
+import { Product } from '@core/models/product.model';
 
 const admin: AuthUser = {
   id: 1,
@@ -35,7 +36,7 @@ describe('NavbarComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [RouterTestingModule, CommonModule, HttpClientTestingModule],
-      declarations: [NavbarComponent],
+      declarations: [NavbarComponent, IconComponent],
       providers: [
         CartService,
         {
