@@ -1,10 +1,10 @@
 # MyStore — Full-Stack E-Commerce App
 
-![Product catalog: search box, category filters and product cards with ratings and prices](docs/screenshots/product-list.png)
+![Product catalog: search box, category filters and product cards with ratings and prices](docs/screenshots/product-list.webp)
 
 | Product details | Shopping cart |
 | --------------- | ------------- |
-| ![Product details: photo gallery, colour options, quantity, stock and customer reviews](docs/screenshots/product-detail.png) | ![Shopping cart: items grouped by shop, delivery address, discount code, payment method and order summary](docs/screenshots/cart-page.png) |
+| ![Product details: photo gallery, colour options, quantity, stock and customer reviews](docs/screenshots/product-detail.webp) | ![Shopping cart: items grouped by shop, delivery address, discount code, payment method and order summary](docs/screenshots/cart-page.webp) |
 
 An e-commerce single-page application built with **Angular 18** and backed by a **Node/Express + PostgreSQL** REST API. Users can register and log in, browse a product catalog, view product details, add items to a shopping cart, manage quantities, and complete a checkout flow with an order confirmation page.
 
