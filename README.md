@@ -1,5 +1,11 @@
 # MyStore — Full-Stack E-Commerce App
 
+![Product catalog: search box, category filters and product cards with ratings and prices](docs/screenshots/product-list.png)
+
+| Product details | Shopping cart |
+| --------------- | ------------- |
+| ![Product details: photo gallery, colour options, quantity, stock and customer reviews](docs/screenshots/product-detail.png) | ![Shopping cart: items grouped by shop, delivery address, discount code, payment method and order summary](docs/screenshots/cart-page.png) |
+
 An e-commerce single-page application built with **Angular 18** and backed by a **Node/Express + PostgreSQL** REST API. Users can register and log in, browse a product catalog, view product details, add items to a shopping cart, manage quantities, and complete a checkout flow with an order confirmation page.
 
 ## Features
@@ -94,7 +100,7 @@ The backend suite also runs in CI on every push — see [.github/workflows/backe
 │           │   ├── cart/     # Cart page & order confirmation (lazy-loaded)
 │           │   └── admin/    # Activity Log and Page views (lazy-loaded)
 │           └── shared/       # Navbar, loading spinner, confirm dialog, form controls, pipes
-└── docs/                     # Dependency reference
+└── docs/                     # Dependency reference, README screenshots
 ```
 
 ## Detailed Documentation
