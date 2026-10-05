@@ -42,6 +42,7 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
 
     TestBed.configureTestingModule({
       providers: [AuthService, AuthApiService, provideHttpClient(), provideHttpClientTesting()],
@@ -54,6 +55,7 @@ describe('AuthService', () => {
   afterEach(() => {
     httpMock.verify();
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   it('should be created', () => {
@@ -303,6 +305,88 @@ describe('AuthService', () => {
       httpMock.expectOne(`${API}/logout`).flush({ status: 200, message: 'ok', data: null });
 
       expect(loggedIn).toBeFalse();
+    });
+  });
+
+  describe('demo entry', () => {
+    // A tab is "fresh" unless the browser says the document was reloaded, which is what keeps a
+    // sign-out from being undone by a refresh
+    const asNavigation = (type: 'navigate' | 'reload'): void => {
+      spyOn(performance, 'getEntriesByType').and.returnValue([{ type } as unknown as PerformanceEntry]);
+    };
+
+    const signOut = (): void => {
+      service.logout();
+      httpMock.expectOne(`${API}/logout`).flush({ status: 200, message: 'ok', data: null });
+    };
+
+    it('should POST an empty body to /auth/demo and start a session', () => {
+      service.loginAsDemo().subscribe((res) => {
+        expect(res.user.username).toBe('testuser');
+      });
+
+      const req = httpMock.expectOne(`${API}/demo`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({});
+      expect(req.request.withCredentials).toBeTrue();
+
+      req.flush({ status: 200, message: 'ok', data: mockSession });
+
+      expect(service.isLoggedIn).toBeTrue();
+      expect(service.getAccessToken()).toBe(mockSession.accessToken);
+    });
+
+    it('should propagate the error when the demo account is unavailable', () => {
+      let errorReceived = false;
+      service.loginAsDemo().subscribe({ error: () => (errorReceived = true) });
+
+      httpMock
+        .expectOne(`${API}/demo`)
+        .flush(
+          { status: 404, message: 'Demo access is not available', data: null, code: 'not_found' },
+          { status: 404, statusText: 'Not Found' },
+        );
+
+      expect(errorReceived).toBeTrue();
+      expect(service.isLoggedIn).toBeFalse();
+    });
+
+    it('should be open in a tab nobody has signed out of', () => {
+      expect(service.canEnterAsDemo()).toBeTrue();
+    });
+
+    it('should close for the rest of the tab once someone signs out', () => {
+      signOut();
+      expect(service.canEnterAsDemo()).toBeFalse();
+    });
+
+    it('should stay closed when the page is reloaded', () => {
+      signOut();
+
+      asNavigation('reload');
+      const reloaded = new AuthService(TestBed.inject(AuthApiService));
+
+      expect(reloaded.canEnterAsDemo()).toBeFalse();
+    });
+
+    it('should open again in a tab that was opened rather than reloaded', () => {
+      signOut();
+
+      // A browser hands a reopened or restored tab its sessionStorage back, so the refusal is
+      // still there and only the navigation type tells the two apart
+      asNavigation('navigate');
+      const opened = new AuthService(TestBed.inject(AuthApiService));
+
+      expect(opened.canEnterAsDemo()).toBeTrue();
+    });
+
+    it('should open again once a real account signs in', () => {
+      signOut();
+
+      service.login('u', 'p').subscribe();
+      httpMock.expectOne(`${API}/login`).flush({ status: 200, message: 'ok', data: mockSession });
+
+      expect(service.canEnterAsDemo()).toBeTrue();
     });
   });
 

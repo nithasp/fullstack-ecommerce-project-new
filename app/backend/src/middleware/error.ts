@@ -55,8 +55,6 @@ export const notFoundMiddleware = (req: Request, res: Response): void => {
   sendError(res, 404, `Route ${req.method} ${req.path} not found`, 'not_found');
 };
 
-// Unexpected errors (database failures, bugs) are logged server-side and never echoed to the client,
-// so stack traces, SQL and internal paths don't leak (OWASP API8)
 export const errorMiddleware = (err: Error, req: Request, res: Response, _next: NextFunction): void => {
   const known = err as AppError & { status?: number; type?: string };
   const db = fromPostgres(err as PostgresError);

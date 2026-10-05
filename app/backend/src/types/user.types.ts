@@ -10,7 +10,6 @@ export interface PublicUser {
   role: UserRole;
 }
 
-// Never sent to a client: it carries the password hash
 export interface StoredUser extends PublicUser {
   passwordHash: string;
   passwordVersion: number;

@@ -47,6 +47,12 @@ const envSchema = z
     ADMIN_PASSWORD: z.string().optional(),
     ADMIN_FIRST_NAME: z.string().optional(),
     ADMIN_LAST_NAME: z.string().optional(),
+
+    DEMO_LOGIN_ENABLED: z.stringbool().default(true),
+    DEMO_USERNAME: z.string().default('demo'),
+    DEMO_PASSWORD: z.string().optional(),
+    DEMO_FIRST_NAME: z.string().optional(),
+    DEMO_LAST_NAME: z.string().optional(),
   })
   .refine((env) => env.DATABASE_URL || (env.POSTGRES_USER && env.POSTGRES_PASSWORD), {
     error: 'set DATABASE_URL, or POSTGRES_USER and POSTGRES_PASSWORD',
@@ -59,8 +65,6 @@ const envSchema = z
     path: ['REFRESH_COOKIE_SAMESITE'],
   });
 
-// An unset or unusable value stops the process here rather than falling back to a default that
-// would weaken authentication or the database connection (OWASP API8)
 function readEnv(): z.infer<typeof envSchema> {
   const present = Object.fromEntries(
     Object.entries(process.env).filter(([, value]) => value !== undefined && value !== ''),
@@ -123,8 +127,6 @@ export const config = {
     sslCa: env.DATABASE_SSL_CA,
   },
 
-  // The browser keeps the refresh token in a cookie JavaScript cannot read, so an XSS bug in the
-  // frontend cannot steal a session; it is sent only to the auth routes (OWASP API2)
   refreshCookie: {
     name: 'refreshToken',
     path: '/api/v1/auth',
@@ -139,5 +141,13 @@ export const config = {
     password: env.ADMIN_PASSWORD,
     firstName: env.ADMIN_FIRST_NAME,
     lastName: env.ADMIN_LAST_NAME,
+  },
+
+  demo: {
+    loginEnabled: env.DEMO_LOGIN_ENABLED,
+    username: env.DEMO_USERNAME,
+    password: env.DEMO_PASSWORD,
+    firstName: env.DEMO_FIRST_NAME,
+    lastName: env.DEMO_LAST_NAME,
   },
 };

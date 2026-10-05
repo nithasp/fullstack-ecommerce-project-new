@@ -13,7 +13,6 @@ export const newUserSchema = z.object({
 
 export const adminNewUserSchema = newUserSchema.extend({ role: roleSchema.default('customer') });
 
-// The role is not accepted here, so a profile update can never grant privileges (OWASP API3)
 export const profileUpdateSchema = z
   .object({
     firstName: optionalText(100),

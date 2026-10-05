@@ -24,7 +24,7 @@
         formControlName="password"
       ></app-input-field>
 
-      <button type="submit" class="auth-btn" [disabled]="isLoading">
+      <button type="submit" class="auth-btn" [disabled]="isLoading || isDemoLoading">
         <span *ngIf="!isLoading">Sign In</span>
         <span *ngIf="isLoading" class="auth-btn__loading">
           <app-loading-spinner
@@ -36,6 +36,28 @@
         </span>
       </button>
     </form>
+
+    <ng-container *ngIf="demoEnabled">
+      <div class="auth-divider"><span>or</span></div>
+
+      <button
+        type="button"
+        class="auth-btn auth-btn--demo"
+        [disabled]="isLoading || isDemoLoading"
+        (click)="enterDemo()"
+      >
+        <span *ngIf="!isDemoLoading">Browse as a guest</span>
+        <span *ngIf="isDemoLoading" class="auth-btn__loading">
+          <app-loading-spinner
+            size="small"
+            layout="inline"
+            message="Opening the demo..."
+          ></app-loading-spinner>
+        </span>
+      </button>
+
+      <p class="auth-hint">No account needed — a shared demo account with the store already set up.</p>
+    </ng-container>
 
     <div class="auth-card__footer">
       <p>Don't have an account? <a routerLink="/auth/register">Create one</a></p>

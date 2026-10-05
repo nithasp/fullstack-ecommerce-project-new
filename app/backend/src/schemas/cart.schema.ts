@@ -4,8 +4,6 @@ import { nullableText, positiveInt, wholeNumber } from './common.schema';
 
 const quantity = wholeNumber(1, MAX_CART_QUANTITY);
 
-// The chosen option is named by id only; its price and stock are read from the product, never
-// taken from the request (OWASP API3)
 export const addCartItemSchema = z.object({
   productId: positiveInt,
   quantity: quantity.default(1),

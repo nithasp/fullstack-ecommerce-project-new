@@ -113,6 +113,9 @@ curl -s -c $JAR -X POST $API/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"johndoe","password":"pass1234"}'
 
+# Sign in as the shared demo account — no body, no credentials (needs `npm run seed:demo`)
+curl -s -c $JAR -X POST $API/auth/demo
+
 # Renew the session from the cookie: new access token, rotated cookie
 curl -s -b $JAR -c $JAR -X POST $API/auth/refresh
 

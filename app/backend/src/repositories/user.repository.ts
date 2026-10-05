@@ -34,8 +34,6 @@ export class UserRepository {
     return rows[0] ? toPublicUser(rows[0]) : null;
   }
 
-  // This and findCredentialsById are the only queries that read the password hash; neither returns a
-  // closed account
   async findCredentials(username: string, db: Queryable = pool): Promise<StoredUser | null> {
     const { rows } = await db.query(
       `SELECT ${SAFE_FIELDS}, password, password_version FROM users

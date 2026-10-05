@@ -8,7 +8,9 @@ import { AuthSession, AuthUser } from '../models/auth.model';
 describe('guestGuard', () => {
   let hasValidToken: boolean;
   let currentUser: AuthUser | null;
+  let canEnterAsDemo: boolean;
   let refresh: () => Observable<AuthSession>;
+  let demo: jasmine.Spy;
   let clearSession: jasmine.Spy;
 
   const user: AuthUser = { id: 1, username: 'someone', firstName: 'Some', lastName: 'One', role: 'customer' };
@@ -29,7 +31,9 @@ describe('guestGuard', () => {
   beforeEach(() => {
     hasValidToken = false;
     currentUser = null;
+    canEnterAsDemo = false;
     refresh = () => of(session);
+    demo = jasmine.createSpy('loginAsDemo').and.returnValue(of(session));
     clearSession = jasmine.createSpy('clearSession');
 
     TestBed.configureTestingModule({
@@ -41,6 +45,8 @@ describe('guestGuard', () => {
             authInitialized$: of(true),
             hasValidToken: () => hasValidToken,
             getCurrentUser: () => currentUser,
+            canEnterAsDemo: () => canEnterAsDemo,
+            loginAsDemo: () => demo() as Observable<AuthSession>,
             refreshAccessToken: () => refresh(),
             clearSession: () => clearSession(),
           },
@@ -55,7 +61,7 @@ describe('guestGuard', () => {
     await expectRedirectToProducts();
   });
 
-  it('should let a signed-out visitor reach the form', async () => {
+  it('should let someone who signed out reach the form', async () => {
     expect(await runGuard()).toBeTrue();
   });
 
@@ -76,5 +82,41 @@ describe('guestGuard', () => {
     refresh = () => throwError(() => new Error('401'));
     expect(await runGuard()).toBeTrue();
     expect(clearSession).toHaveBeenCalled();
+  });
+
+  describe('demo entry', () => {
+    beforeEach(() => {
+      canEnterAsDemo = true;
+    });
+
+    it('should take a visitor who lands on the form straight into the store', async () => {
+      await expectRedirectToProducts();
+      expect(demo).toHaveBeenCalled();
+    });
+
+    it('should take over from a cached session the cookie can no longer renew', async () => {
+      currentUser = user;
+      refresh = () => throwError(() => new Error('401'));
+
+      await expectRedirectToProducts();
+      expect(clearSession).toHaveBeenCalled();
+      expect(demo).toHaveBeenCalled();
+    });
+
+    it('should leave the form open when the demo is unavailable', async () => {
+      demo.and.returnValue(throwError(() => new Error('404')));
+
+      expect(await runGuard()).toBeTrue();
+    });
+
+    // Clearing the session here is what sends the app to the login page, so the guard would run
+    // again on a session it had just thrown away
+    it('should not clear the session when the demo is unavailable', async () => {
+      demo.and.returnValue(throwError(() => new Error('404')));
+
+      await runGuard();
+
+      expect(clearSession).not.toHaveBeenCalled();
+    });
   });
 });

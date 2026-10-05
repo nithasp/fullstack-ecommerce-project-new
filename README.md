@@ -16,6 +16,7 @@ An e-commerce single-page application built with **Angular 18** and backed by a 
 - **Checkout** — pick the items to buy, a shipping address and a payment method, apply discount codes, and place an order. The server charges the cart rows it is given: quantities from the cart, prices and stock from the product, stock reduced, and the price paid stored on each order line
 - **Order confirmation** — success page displayed after checkout
 - **User authentication** — register, log in, log out. The access token lives in memory and the session in an HttpOnly cookie, so a script on the page cannot steal it
+- **Guest entry** — opening the site signs the visitor in to a shared demo account, so the store is there to walk through without registering. Signing out brings the login and register forms back for the rest of that tab
 - **Admin role** — `customer` / `admin`; admins get an `/admin` API for every account, the catalog, orders, carts and addresses (see [app/backend/SECURITY.md](app/backend/SECURITY.md) for the OWASP API Top 10 mapping)
 - **Activity log** — writes, logins, failed logins, logouts and admin reads of account data are recorded with who, when, the route and the result; admins browse them with filters for user, type, result and dates
 - **Page views** — the pages people open are kept separately, on their own admin page
@@ -40,6 +41,7 @@ docker compose up -d          # starts PostgreSQL on 127.0.0.1:5432
 cp .env.example .env          # then fill in TOKEN_SECRET and PASSWORD_PEPPER
 npm run migrate:up            # creates database tables
 npm run seed:admin            # creates the admin account from ADMIN_USERNAME / ADMIN_PASSWORD in .env
+npm run seed:demo             # creates the shared demo customer that guest entry signs visitors in to
 npm run watch                 # starts the API at http://localhost:3000
 ```
 
@@ -56,6 +58,18 @@ ng serve                      # starts the app at http://localhost:4200
 ```
 
 **Both backend and frontend must be running at the same time.** The frontend fetches all product and cart data from the backend API at `http://localhost:3000`.
+
+### Guest entry
+
+Opening `http://localhost:4200` signs the visitor in to the shared demo account and drops them
+straight on the catalog — no form to fill in first. Signing out returns the login and register
+forms and keeps them for the rest of that tab, refreshes included; a newly opened tab starts as a
+guest again.
+
+Switch it off per build with `autoDemoLogin: false` in `src/environments/environment*.ts`
+(the login page then drops its **Browse as a guest** button), or server-side with
+`DEMO_LOGIN_ENABLED=false`. Everyone who enters this way shares one customer account, so treat its
+cart and orders as public.
 
 ## Tests
 

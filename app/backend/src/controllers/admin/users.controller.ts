@@ -35,8 +35,6 @@ export const update = asyncHandler(async (req: Request, res: Response) => {
   sendSuccess(res, await userService.updateProfile(id, changes), 'User updated.');
 });
 
-// Changing a role ends that account's sessions, so the old privilege cannot be renewed; admins
-// cannot change their own role, which keeps the last admin from locking themselves out
 export const updateRole = asyncHandler(async (req: Request, res: Response) => {
   const { id } = parse(idParams, req.params);
   const { role } = parse(roleUpdateSchema, req.body);

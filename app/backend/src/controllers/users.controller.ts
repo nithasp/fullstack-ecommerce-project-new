@@ -9,8 +9,6 @@ import { currentUserId } from '../utils/request';
 import { sendSuccess } from '../utils/response';
 import { parse } from '../utils/validation';
 
-// These routes only ever serve the account the token belongs to; an admin manages other accounts
-// through /admin/users (OWASP API1)
 function requireSelf(req: Request): number {
   const { id } = parse(idParams, req.params);
   if (id !== currentUserId(req)) throw new AppError('You can only access your own data', 403, 'forbidden');

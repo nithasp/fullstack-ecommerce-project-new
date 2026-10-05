@@ -22,9 +22,6 @@ const UNNAMED_EVENT = 'api.request';
 
 const MAX_DETAIL_LENGTH = 100;
 
-// A row keeps small, non-secret facts only: ids, quantities, statuses. Never a password,
-// a token or a whole request body.
-
 function safeValue(val: unknown): string | number | boolean | undefined {
   if (typeof val === 'number') return Number.isFinite(val) ? val : undefined;
   if (typeof val === 'boolean') return val;
@@ -56,7 +53,6 @@ const fromQuery =
   (req) =>
     copy(req.query as Record<string, unknown>, keys);
 
-// Names the fields an update sent, never their values: one of them may be a password
 const changed =
   (...keys: string[]): AuditDetailsFn =>
   (req) => {

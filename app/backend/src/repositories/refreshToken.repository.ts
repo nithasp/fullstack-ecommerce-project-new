@@ -3,7 +3,6 @@ import pool from '../database';
 import { Queryable } from '../types/database.types';
 import { StoredRefreshToken } from '../types/refreshToken.types';
 
-// Only a SHA-256 hash of each token is stored, so a database leak doesn't hand out live sessions
 const hashToken = (token: string): string => crypto.createHash('sha256').update(token).digest('hex');
 
 export class RefreshTokenRepository {

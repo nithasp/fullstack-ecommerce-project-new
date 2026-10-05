@@ -4,7 +4,6 @@ import { verifyAuthToken } from '../middleware/auth';
 
 const router = Router();
 
-// The catalog is read-only here and shows active products only; /admin/products manages it
 router.use(verifyAuthToken);
 
 router.get('/', products.index);

@@ -21,7 +21,6 @@ export function createOrderService({ orders, products }: OrderServiceDeps) {
       return order;
     },
 
-    // Another customer's order is reported as not found, so its existence isn't revealed (OWASP API1)
     async getOwnOrder(id: number, userId: number): Promise<Order> {
       const order = await orders.show(id);
       if (!order || order.userId !== userId) throw notFound(id);

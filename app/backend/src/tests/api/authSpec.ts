@@ -1,5 +1,9 @@
 import { createHash } from 'crypto';
+import { config } from '../../config';
 import pool from '../../database';
+import { UserRepository } from '../../repositories/user.repository';
+import { CURRENT_PASSWORD_VERSION, hashPassword } from '../../services/password.service';
+import { UserRole } from '../../types/user.types';
 import { api, API, cookieValue, refreshCookie, registerCustomer, uniqueName } from '../support/api';
 
 async function ageRotation(token: string): Promise<void> {
@@ -97,6 +101,63 @@ describe('Auth endpoints', () => {
         .send({ username: uniqueName('ghost'), password: 'whatever123' })
         .expect(401);
       expect(res.body.message).toBe('Invalid username or password');
+    });
+  });
+
+  describe('POST /auth/demo', () => {
+    const users = new UserRepository();
+    const demoUsername = config.demo.username;
+
+    async function giveDemoAccount(role: UserRole = 'customer'): Promise<number> {
+      const created = await users.create({
+        firstName: 'Demo',
+        lastName: 'Visitor',
+        username: demoUsername,
+        role,
+        passwordHash: await hashPassword('demopass12345'),
+        passwordVersion: CURRENT_PASSWORD_VERSION,
+      });
+      return created.id;
+    }
+
+    afterEach(async () => {
+      await pool.query('DELETE FROM users WHERE LOWER(username) = LOWER($1)', [demoUsername]);
+    });
+
+    it('signs a visitor in as the shared demo account', async () => {
+      const id = await giveDemoAccount();
+      const res = await api.post(`${API}/auth/demo`).expect(200);
+
+      expect(res.body.data.user.id).toBe(id);
+      expect(res.body.data.user.username).toBe(demoUsername);
+      expect(res.body.data.user.role).toBe('customer');
+      expect(typeof res.body.data.accessToken).toBe('string');
+    });
+
+    it('keeps the refresh token out of the body and in a cookie', async () => {
+      await giveDemoAccount();
+      const res = await api.post(`${API}/auth/demo`).expect(200);
+
+      expect(res.body.data.refreshToken).toBeUndefined();
+      expect(refreshCookie(res)).toContain('HttpOnly');
+    });
+
+    it('hands out a session the rest of the API accepts', async () => {
+      await giveDemoAccount();
+      const res = await api.post(`${API}/auth/demo`).expect(200);
+
+      await api.get(`${API}/auth/me`).set('Authorization', `Bearer ${res.body.data.accessToken}`).expect(200);
+    });
+
+    it('answers 404 when the demo account does not exist', async () => {
+      const res = await api.post(`${API}/auth/demo`).expect(404);
+      expect(res.body.code).toBe('not_found');
+      expect(res.body.message).toBe('Demo access is not available');
+    });
+
+    it('refuses to hand out an admin account', async () => {
+      await giveDemoAccount('admin');
+      await api.post(`${API}/auth/demo`).expect(404);
     });
   });
 

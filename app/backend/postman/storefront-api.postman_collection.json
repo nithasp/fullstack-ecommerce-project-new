@@ -282,6 +282,45 @@
           ]
         },
         {
+          "name": "Sign in to the demo account",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/demo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "demo"
+              ]
+            },
+            "description": "Sign in to the demo account\n\nSigns the caller in as the one shared demo account, so the storefront can be walked\nthrough without registering. No request body and no credentials.\n\nIt can only ever reach the account named by `DEMO_USERNAME`, and only while that\naccount holds the `customer` role — an admin demo account is refused rather than\nhanded out. `DEMO_LOGIN_ENABLED=false` closes the route; it then answers `404`, as\nit does when the account does not exist.\n",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code === 200 && body.data) {",
+                  "  pm.collectionVariables.set('accessToken', body.data.accessToken);",
+                  "  pm.collectionVariables.set('userId', body.data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Renew the session",
           "request": {
             "method": "POST",

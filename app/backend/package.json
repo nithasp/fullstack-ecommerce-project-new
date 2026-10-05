@@ -24,7 +24,8 @@
     "migrate:down": "db-migrate --config database.js down",
     "migrate:reset": "db-migrate --config database.js reset",
     "migrate:prod": "db-migrate --config database.js --env production up",
-    "seed:admin": "tsx src/scripts/seedAdmin.ts"
+    "seed:admin": "tsx src/scripts/seedAdmin.ts",
+    "seed:demo": "tsx src/scripts/seedDemo.ts"
   },
   "keywords": [
     "api",

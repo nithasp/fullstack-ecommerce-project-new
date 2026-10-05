@@ -27,6 +27,7 @@ The refresh token is **not** in the response body. It is set as a cookie the bro
 | ------ | ------------------- | ---- | ------------------------------------ |
 | POST   | `/auth/register`    | No   | Register — returns `{ user, accessToken }`, sets the refresh cookie |
 | POST   | `/auth/login`       | No   | Log in — same shape; a wrong username and a wrong password answer identically |
+| POST   | `/auth/demo`        | No   | Sign in as the shared demo customer (`DEMO_USERNAME`) — no body; `404` when switched off, missing, or not a `customer` |
 | POST   | `/auth/refresh`     | Cookie | New access token and a rotated cookie — presenting an already-used token revokes that whole session |
 | POST   | `/auth/logout`      | Cookie | End that session and clear the cookie |
 | POST   | `/auth/logout-all`  | JWT  | End every session of the account     |

@@ -26,6 +26,12 @@ export class AuthApiService {
       .pipe(map((res) => res.data));
   }
 
+  demo(): Observable<AuthSession> {
+    return this.http
+      .post<ApiResponse<AuthSession>>(`${this.baseUrl}/demo`, {}, WITH_COOKIE)
+      .pipe(map((res) => res.data));
+  }
+
   refresh(): Observable<AuthSession> {
     return this.http
       .post<ApiResponse<AuthSession>>(`${this.baseUrl}/refresh`, {}, WITH_COOKIE)

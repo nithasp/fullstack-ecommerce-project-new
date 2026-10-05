@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { config } from '../config';
 import { auditAs } from '../middleware/audit';
 import { loginSchema, registerSchema } from '../schemas/auth.schema';
 import { tokenService, userService } from '../services';
@@ -39,7 +40,6 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   const user = await userService.authenticate(input.username, input.password);
   if (!user) {
-    // The username that was tried is kept (never the password), so repeated guessing shows up in the log
     auditAs(res, { action: 'LOGIN_FAILED', event: 'user.login_failed', username: input.username });
     throw new AppError('Invalid username or password', 401, 'invalid_credentials');
   }
@@ -55,6 +55,25 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     userRole: user.role,
   });
   sendSuccess(res, { user, accessToken }, 'Login successful! Welcome back.');
+});
+
+export const demo = asyncHandler(async (_req: Request, res: Response) => {
+  const user = config.demo.loginEnabled ? await userService.findByUsername(config.demo.username) : null;
+  if (!user || user.role !== 'customer') {
+    throw new AppError('Demo access is not available', 404, 'not_found');
+  }
+
+  const { accessToken, refreshToken } = await tokenService.issueSession(user);
+  setRefreshCookie(res, refreshToken);
+
+  auditAs(res, {
+    action: 'LOGIN',
+    event: 'user.demo_logged_in',
+    userId: user.id,
+    username: user.username,
+    userRole: user.role,
+  });
+  sendSuccess(res, { user, accessToken }, 'Signed in to the demo account.');
 });
 
 export const refresh = asyncHandler(async (req: Request, res: Response) => {

@@ -42,7 +42,6 @@ app.use(
 
 app.use(helmet());
 app.use(cors({ origin: config.allowedOrigins, credentials: true }));
-// Bounded body size so a single request can't exhaust memory (OWASP API4); bulk product import stays well under it
 app.use(express.json({ limit: config.jsonBodyLimit }));
 app.use(cookieParser());
 app.set('etag', false);
@@ -55,7 +54,6 @@ app.get(HEALTH_PATH, async (_req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
 
-// Per-IP ceiling on every route (OWASP API4); the auth routes add a tighter one of their own
 app.use(apiLimiter);
 
 app.get('/', (_req: Request, res: Response) => {

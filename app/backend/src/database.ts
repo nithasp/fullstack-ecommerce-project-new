@@ -5,8 +5,6 @@ import { Tx } from './types/database.types';
 
 const { url, host, port, name, user, password, sslMode, sslCa } = config.database;
 
-// 'no-verify' accepts any certificate the server offers, which a provider with a self-signed
-// certificate needs; it does not protect against a machine in the middle (OWASP API8)
 const ssl =
   sslMode === 'off'
     ? false

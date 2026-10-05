@@ -60,7 +60,6 @@ export const userIdParams = z.object({ userId: positiveInt });
 
 export const userIdFilterSchema = z.object({ userId: positiveInt.optional() });
 
-// Bounded page size so a single list request can't pull the whole table (OWASP API4)
 export const paginationSchema = z.object({
   limit: wholeNumber(1, PAGINATION_MAX_LIMIT).default(PAGINATION_DEFAULT_LIMIT),
   offset: nonNegativeInt.default(0),

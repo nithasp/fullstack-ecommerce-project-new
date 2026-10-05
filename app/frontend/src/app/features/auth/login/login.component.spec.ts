@@ -17,6 +17,7 @@ describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let component: LoginComponent;
   let login: jasmine.Spy;
+  let loginAsDemo: jasmine.Spy;
   let notification: { success: jasmine.Spy; error: jasmine.Spy };
   let navigate: jasmine.Spy;
 
@@ -30,8 +31,16 @@ describe('LoginComponent', () => {
     fixture.detectChanges();
   };
 
+  const demoButton = (): HTMLButtonElement => fixture.nativeElement.querySelector('.auth-btn--demo');
+
+  const clickDemo = (): void => {
+    demoButton().click();
+    fixture.detectChanges();
+  };
+
   beforeEach(async () => {
     login = jasmine.createSpy('login').and.returnValue(of(session));
+    loginAsDemo = jasmine.createSpy('loginAsDemo').and.returnValue(of(session));
     notification = {
       success: jasmine.createSpy('success'),
       error: jasmine.createSpy('error'),
@@ -44,7 +53,10 @@ describe('LoginComponent', () => {
         provideRouter([]),
         {
           provide: AuthService,
-          useValue: { login: (u: string, p: string) => login(u, p) as Observable<AuthSession> },
+          useValue: {
+            login: (u: string, p: string) => login(u, p) as Observable<AuthSession>,
+            loginAsDemo: () => loginAsDemo() as Observable<AuthSession>,
+          },
         },
         { provide: NotificationService, useValue: notification },
       ],
@@ -129,6 +141,60 @@ describe('LoginComponent', () => {
       submit();
       submit();
       expect(login).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('the guest entry', () => {
+    it('should offer a way in without an account', () => {
+      expect(component.demoEnabled).toBeTrue();
+      expect(demoButton()).toBeTruthy();
+    });
+
+    it('should land on the products page', () => {
+      clickDemo();
+
+      expect(loginAsDemo).toHaveBeenCalled();
+      expect(navigate).toHaveBeenCalledWith(['/products']);
+      expect(notification.success).toHaveBeenCalled();
+    });
+
+    it('should ask the server once however often the button is pressed', () => {
+      loginAsDemo.and.returnValue(new Observable<AuthSession>());
+
+      clickDemo();
+      clickDemo();
+
+      expect(loginAsDemo).toHaveBeenCalledTimes(1);
+      expect(component.isDemoLoading).toBeTrue();
+    });
+
+    it('should hold back a sign-in while the demo request is in flight', () => {
+      loginAsDemo.and.returnValue(new Observable<AuthSession>());
+      fillIn('someone', 'hunter2000');
+
+      clickDemo();
+      submit();
+
+      expect(login).not.toHaveBeenCalled();
+    });
+
+    it('should report an unavailable demo and leave the form usable', () => {
+      loginAsDemo.and.returnValue(throwError(() => new Error('Demo access is not available')));
+
+      clickDemo();
+
+      expect(notification.error).toHaveBeenCalledWith('Demo access is not available');
+      expect(navigate).not.toHaveBeenCalled();
+      expect(component.isDemoLoading).toBeFalse();
+      expect(component.form.enabled).toBeTrue();
+    });
+
+    it('should fall back to a generic message when the error carries none', () => {
+      loginAsDemo.and.returnValue(throwError(() => new Error('')));
+
+      clickDemo();
+
+      expect(notification.error).toHaveBeenCalledWith('The demo is unavailable right now.');
     });
   });
 

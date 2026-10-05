@@ -21,8 +21,12 @@ function addToken(req: HttpRequest<unknown>, token: string): HttpRequest<unknown
   return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
 }
 
+// These carry no access token, and a 401 from one of them is the answer to the credentials sent,
+// not a session that went stale
+const AUTH_ENDPOINTS = ['/auth/login', '/auth/register', '/auth/demo', '/auth/refresh'];
+
 function isAuthEndpoint(url: string): boolean {
-  return url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/refresh');
+  return AUTH_ENDPOINTS.some((endpoint) => url.includes(endpoint));
 }
 
 function extractMessage(error: HttpErrorResponse): string {

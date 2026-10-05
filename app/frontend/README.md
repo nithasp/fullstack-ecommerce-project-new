@@ -12,7 +12,7 @@ E-commerce SPA built with Angular 18. Authenticate, browse products, manage a ca
 ```bash
 npm install
 ng serve          # http://localhost:4200
-ng test           # Karma + Jasmine (40 spec files, 387 specs)
+ng test           # Karma + Jasmine (41 spec files, 413 specs)
 ng build          # production build
 ```
 
@@ -21,6 +21,7 @@ ng build          # production build
 | Area | Description |
 |------|-------------|
 | **Auth** | Register / Login / Logout. The access token stays in memory and the session lives in an HttpOnly cookie the API sets, so a script on the page cannot read it; the interceptor attaches the token and renews it on a 401. |
+| **Guest entry** | A visitor with no session is signed in to the shared demo account by the route guards, so the store opens without a form (`environment.autoDemoLogin`, `POST /auth/demo`). Signing out sets a per-tab flag that holds through refreshes, so the forms stay put; a new tab is a guest again. The login page offers the same entry as **Browse as a guest**. |
 | **Products** | Product list and detail pages. Products have type variants (color/price/stock) and reviews. |
 | **Cart** | Add/remove items, debounced quantity updates, grouped by shop. Synced to backend REST API. |
 | **Checkout** | Address dialog (add/edit/select), order confirmation page. Only the ticked cart rows are sent, by id — the server prices them and reduces stock. |
@@ -87,6 +88,11 @@ the app-agnostic pieces, and reach app state through `core` services like everyt
   renews from the refresh cookie on a 401 → a reload asks `POST /auth/refresh` for a new one.
   `TokenRefreshService` coordinates that renewal, so a burst of 401s makes one refresh call and every
   waiter shares its outcome
+- **Guest entry**: with no session to renew, `authGuard` and `guestGuard` call `POST /auth/demo` and
+  carry on to the route that was asked for. Signing out writes a flag to `sessionStorage`, which the
+  guards read, so the forms stay put. A browser hands a reopened tab its `sessionStorage` back, so
+  `AuthService` clears that flag unless the Navigation Timing entry says the document was reloaded —
+  which is what tells a refresh apart from a tab someone just opened
 - **Cart state**: `CartService` fetches/resets on auth state change. Quantity edits are debounced
   **per row** (`groupBy` → `debounceTime` → `switchMap`), so editing two rows inside one window syncs
   both; a rejected edit rolls that row back to the quantity the server last confirmed

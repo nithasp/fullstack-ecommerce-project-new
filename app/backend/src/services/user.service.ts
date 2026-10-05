@@ -29,7 +29,6 @@ export function createUserService({ users, orders, addresses, carts, tokens }: U
     return user;
   }
 
-  // A new password ends every session of that account, so a stolen token cannot outlive the change
   async function setPassword(id: number, newPassword: string): Promise<void> {
     const hash = await hashPassword(newPassword);
     const updated = await users.updatePassword(id, hash, CURRENT_PASSWORD_VERSION);
@@ -41,6 +40,10 @@ export function createUserService({ users, orders, addresses, carts, tokens }: U
     findUser,
     requireUser,
     setPassword,
+
+    findByUsername(username: string): Promise<PublicUser | null> {
+      return users.findByUsername(username);
+    },
 
     listUsers(page: Pagination): Promise<Page<PublicUser>> {
       return pageOf(
@@ -90,8 +93,6 @@ export function createUserService({ users, orders, addresses, carts, tokens }: U
       return updated;
     },
 
-    // Changing your own password takes the current one, so a stolen access token alone cannot lock
-    // the owner out of the account (OWASP ASVS)
     async changeOwnPassword(
       id: number,
       currentPassword: string,

@@ -3,6 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth.service';
 import { NotificationService } from '@core/services/ui/notification.service';
+import { environment } from '@env/environment';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +18,10 @@ export class LoginComponent {
   private readonly notification = inject(NotificationService);
   private readonly router = inject(Router);
 
+  readonly demoEnabled = environment.autoDemoLogin;
+
   isLoading = false;
+  isDemoLoading = false;
 
   readonly form = this.fb.nonNullable.group({
     username: ['', Validators.required],
@@ -27,7 +31,7 @@ export class LoginComponent {
   onSubmit(): void {
     // A disabled form reports status DISABLED rather than INVALID, so the check below would
     // let a second submit through while the first is still in flight
-    if (this.isLoading) return;
+    if (this.isLoading || this.isDemoLoading) return;
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -49,6 +53,24 @@ export class LoginComponent {
         this.notification.error(err.message || 'Login failed. Please try again.');
         this.isLoading = false;
         this.form.enable();
+      },
+    });
+  }
+
+  // The same entry the guards take on an untouched tab, offered again to someone who signed out
+  enterDemo(): void {
+    if (this.isLoading || this.isDemoLoading) return;
+
+    this.isDemoLoading = true;
+
+    this.authService.loginAsDemo().subscribe({
+      next: (session) => {
+        this.notification.success(`You are browsing as ${session.user.firstName}.`);
+        void this.router.navigate(['/products']);
+      },
+      error: (err: Error) => {
+        this.notification.error(err.message || 'The demo is unavailable right now.');
+        this.isDemoLoading = false;
       },
     });
   }

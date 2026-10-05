@@ -17,8 +17,6 @@ export function createCartService({ addresses, carts, orders, products }: CartSe
       return carts.listByUser(userId);
     },
 
-    // The option, its price and the shop are read from the product, so a request cannot put its own
-    // price into a cart row (OWASP API3)
     async addItem(userId: number, input: AddCartItem): Promise<CartItem> {
       const product = await products.show(input.productId);
       if (!product) throw new AppError('Product does not exist', 400, 'invalid_request');
@@ -86,8 +84,6 @@ export function createCartService({ addresses, carts, orders, products }: CartSe
       const wanted = [...new Set(cartItemIds)];
 
       return withTransaction(async (tx) => {
-        // Looked up against the signed-in account, so an order cannot be shipped to somebody else's
-        // address by sending its id (OWASP API1)
         const address = await addresses.findForUser(addressId, userId, tx);
         if (!address) throw new AppError('That shipping address was not found', 404, 'not_found');
 

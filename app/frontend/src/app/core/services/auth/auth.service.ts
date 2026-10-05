@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
+import { environment } from '@env/environment';
 import { AuthApiService } from './auth-api.service';
 import { AuthUser, AuthSession } from '../../models/auth.model';
 
 const USER_KEY = 'currentUser';
+const DEMO_OPT_OUT_KEY = 'demoEntryDeclined';
 
 /**
  * JWT segments are base64**url**: `-` and `_` stand in for `+` and `/`, and the `=` padding is
@@ -15,6 +17,16 @@ function decodeJwtSegment(segment: string): Record<string, unknown> {
   const base64 = segment.replace(/-/g, '+').replace(/_/g, '/');
   const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
   return JSON.parse(atob(padded)) as Record<string, unknown>;
+}
+
+/**
+ * A browser brings sessionStorage back when it reopens or restores a closed tab, so the storage
+ * alone cannot tell a tab that was refreshed from one that was opened again.
+ */
+function isTabRefresh(): boolean {
+  return performance
+    .getEntriesByType('navigation')
+    .some((entry) => (entry as PerformanceNavigationTiming).type === 'reload');
 }
 
 @Injectable({ providedIn: 'root' })
@@ -34,7 +46,33 @@ export class AuthService {
   private initializedSubject = new BehaviorSubject<boolean>(false);
   authInitialized$ = this.initializedSubject.asObservable();
 
-  constructor(private authApi: AuthApiService) {}
+  constructor(private authApi: AuthApiService) {
+    // A tab that was opened rather than refreshed starts over as a visitor, so the demo greets
+    // whoever opens the site next even if the last person in this tab signed out
+    if (!isTabRefresh()) this.setDemoDeclined(false);
+  }
+
+  /** False once someone signs out, so the demo does not pull them straight back in. */
+  canEnterAsDemo(): boolean {
+    return environment.autoDemoLogin && !this.demoDeclined();
+  }
+
+  private demoDeclined(): boolean {
+    try {
+      return sessionStorage.getItem(DEMO_OPT_OUT_KEY) !== null;
+    } catch {
+      return false;
+    }
+  }
+
+  private setDemoDeclined(declined: boolean): void {
+    try {
+      if (declined) sessionStorage.setItem(DEMO_OPT_OUT_KEY, '1');
+      else sessionStorage.removeItem(DEMO_OPT_OUT_KEY);
+    } catch {
+      // A browser with storage switched off simply greets every visitor with the demo
+    }
+  }
 
   /** The cached profile only says whether a session is worth asking about; the server decides. */
   initializeAuth(): Observable<void> {
@@ -104,6 +142,7 @@ export class AuthService {
     this.accessToken = session.accessToken;
     this.cacheUser(session.user);
     this.loggedInSubject.next(true);
+    this.setDemoDeclined(false);
   }
 
   register(username: string, password: string): Observable<AuthSession> {
@@ -114,12 +153,19 @@ export class AuthService {
     return this.authApi.login(username, password).pipe(tap((session) => this.storeSession(session)));
   }
 
+  loginAsDemo(): Observable<AuthSession> {
+    return this.authApi.demo().pipe(tap((session) => this.storeSession(session)));
+  }
+
   refreshAccessToken(): Observable<AuthSession> {
     return this.authApi.refresh().pipe(tap((session) => this.storeSession(session)));
   }
 
   logout(): void {
     this.authApi.logout().subscribe({ error: () => {} });
+    // Declined first: a cleared session is what sends the app back to the login page, and the
+    // guard there reads this
+    this.setDemoDeclined(true);
     this.clearSession();
   }
 

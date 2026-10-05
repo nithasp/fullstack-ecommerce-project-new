@@ -9,7 +9,6 @@ import userRoutes from './users.routes';
 
 const router = Router();
 
-// One guard chain for the whole namespace: a valid token, then the role read from the database
 router.use(verifyAuthToken, requireAdmin);
 
 router.use('/users', userRoutes);
@@ -19,7 +18,6 @@ router.use('/carts', cartRoutes);
 router.use('/cart-items', cartItemRoutes);
 router.use('/addresses', addressRoutes);
 
-// Read-only on purpose: there is no route that edits or deletes an entry
 router.get('/audit-logs', logs.auditLogs);
 router.get('/page-views', logs.pageViews);
 

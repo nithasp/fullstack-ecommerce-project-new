@@ -44,7 +44,7 @@ info:
     ## Authentication
 
     All routes except `GET /`, `POST /auth/register`, `POST /auth/login`,
-    `POST /auth/refresh` and `POST /auth/logout` require an access token:
+    `POST /auth/demo`, `POST /auth/refresh` and `POST /auth/logout` require an access token:
 
     ```
     Authorization: Bearer <accessToken>
@@ -54,8 +54,8 @@ info:
     rejected) that expire after 15 minutes (`ACCESS_TOKEN_EXPIRY`).
 
     The **refresh token is never in the response body**. `POST /auth/register`,
-    `POST /auth/login`, `POST /auth/refresh` and `PUT /users/{id}/password` set it as a
-    cookie that JavaScript cannot read:
+    `POST /auth/login`, `POST /auth/demo`, `POST /auth/refresh` and
+    `PUT /users/{id}/password` set it as a cookie that JavaScript cannot read:
 
     ```
     Set-Cookie: refreshToken=…; HttpOnly; Secure; SameSite=None; Path=/api/v1/auth; Max-Age=604800
@@ -119,8 +119,8 @@ info:
 
     ## Rate limits
 
-    - `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`: `AUTH_RATE_LIMIT`
-      (default 20) requests per IP per 15 minutes.
+    - `POST /auth/register`, `POST /auth/login`, `POST /auth/demo`, `POST /auth/refresh`:
+      `AUTH_RATE_LIMIT` (default 20) requests per IP per 15 minutes.
     - Every other route: `API_RATE_LIMIT` (default 500) requests per IP per 15 minutes.
       This ceiling applies to every route below and is not repeated on each one.
 
@@ -340,6 +340,50 @@ paths:
                 message: Invalid username or password
                 data: null
                 code: invalid_credentials
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/demo:
+    post:
+      tags: [Auth]
+      summary: Sign in to the demo account
+      description: |
+        Signs the caller in as the one shared demo account, so the storefront can be walked
+        through without registering. No request body and no credentials.
+
+        It can only ever reach the account named by `DEMO_USERNAME`, and only while that
+        account holds the `customer` role — an admin demo account is refused rather than
+        handed out. `DEMO_LOGIN_ENABLED=false` closes the route; it then answers `404`, as
+        it does when the account does not exist.
+      operationId: loginAsDemo
+      security: []
+      responses:
+        '200':
+          description: Signed in as the demo account.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/RefreshCookie'
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      message: { type: string, example: Signed in to the demo account. }
+                      data: { $ref: '#/components/schemas/AuthSession' }
+        '404':
+          description: Demo access is switched off, or the account is missing.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+              example:
+                status: 404
+                message: Demo access is not available
+                data: null
+                code: not_found
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':

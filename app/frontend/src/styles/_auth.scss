@@ -86,4 +86,35 @@
     @include flex-center;
     gap: $spacing-sm;
   }
+
+  &--demo {
+    @include button-secondary;
+    width: 100%;
+    padding: $spacing-sm-md $spacing-lg;
+    font-size: $font-size-base;
+    margin-top: 0;
+  }
+}
+
+.auth-divider {
+  @include flex-center;
+  gap: $spacing-md;
+  margin: $spacing-lg 0 $spacing-md;
+  color: $color-text-light;
+  font-size: $font-size-sm;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $color-border;
+  }
+}
+
+.auth-hint {
+  margin-top: $spacing-sm;
+  text-align: center;
+  color: $color-text-light;
+  font-size: $font-size-xs;
 }

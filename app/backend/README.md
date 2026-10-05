@@ -93,6 +93,22 @@ npm run seed:admin
 
 Re-running it is safe: an existing account with that username is promoted, not recreated.
 
+### 5b. Create the demo account (optional)
+
+`POST /api/v1/auth/demo` signs a visitor in as one shared customer account, so the storefront can
+be looked around without registering. The route needs that account to exist:
+
+```bash
+npm run seed:demo
+```
+
+It creates (or repairs) the `customer` named by `DEMO_USERNAME` — `demo` unless you set it. The
+route asks for no password, so `DEMO_PASSWORD` is optional: left empty, the seed makes up a
+throwaway one. Set it (12+ characters) only if you also want to sign in as the demo by hand.
+
+`DEMO_LOGIN_ENABLED=false` closes the route without touching the account. See
+[Sessions](#sessions) for what it does and does not hand out.
+
 ### 6. Start the server
 
 ```bash
@@ -205,9 +221,10 @@ default 50) and `?offset=`, and return the `meta` object shown above.
 
 ### Sessions
 
-`POST /auth/register`, `/auth/login` and `/auth/refresh` return `{ user, accessToken }` and set
-the refresh token as an **HttpOnly cookie** (`Path=/api/v1/auth`, `Secure` in production) that
-JavaScript cannot read. Browser clients send those calls with credentials.
+`POST /auth/register`, `/auth/login`, `/auth/demo` and `/auth/refresh` return
+`{ user, accessToken }` and set the refresh token as an **HttpOnly cookie**
+(`Path=/api/v1/auth`, `Secure` in production) that JavaScript cannot read. Browser clients send
+those calls with credentials.
 
 The `accessToken` goes in an `Authorization: Bearer` header and lasts `ACCESS_TOKEN_EXPIRY`. Once
 it runs out, requests answer 401 with `code: "token_expired"`, the cue to call `/auth/refresh`.
@@ -226,6 +243,22 @@ from one site, e.g. `store.example.com` and `api.example.com`. `none` is rejecte
 Refresh tokens rotate on every use. A token presented again within 10 seconds of being used (two
 tabs refreshing at once) is renewed; any later, it counts as stolen: the whole session is revoked
 and the audit log gets a `SECURITY` entry.
+
+#### Demo sessions
+
+`POST /auth/demo` takes no body and no credentials: it signs the caller in as the single account
+named by `DEMO_USERNAME` and issues the same session any login would. It is the front door of a
+portfolio deployment, so it is deliberately narrow:
+
+- it can reach that one account and no other, whatever the caller sends;
+- it refuses unless that account holds the `customer` role, so a demo account promoted by hand
+  cannot hand every visitor the admin API;
+- `DEMO_LOGIN_ENABLED=false`, or a missing account, answers `404 not_found`;
+- it is under `AUTH_RATE_LIMIT` like the other credential routes, and each entry is recorded in
+  the audit log as `user.demo_logged_in`.
+
+Everyone who enters this way shares one account, so treat its cart, orders and addresses as
+public. Nothing else in the API is loosened: the demo session is an ordinary customer session.
 
 ### Roles
 
@@ -282,6 +315,11 @@ A deployment needs at least `ENV=production`, `DATABASE_URL` (plus `DATABASE_SSL
 and `ALLOWED_ORIGIN` set to the frontend's origin. Change `TRUST_PROXY` if there is not exactly
 one proxy in front of the app.
 
+Guest entry is on by default, but `POST /auth/demo` answers `404` until the account exists, so
+run `npm run seed:demo` once against the deployed database (`DATABASE_URL` in the environment) the
+way you run `seed:admin`. On a deployment that is not a public demo, set `DEMO_LOGIN_ENABLED=false`
+instead.
+
 ## Ports
 
 | Service | Port |
@@ -305,6 +343,7 @@ one proxy in front of the app.
 | `npm run migrate:up` / `migrate:down` / `migrate:reset` | Migrations on the dev database |
 | `npm run migrate:prod` | Migrations on the production database |
 | `npm run seed:admin` | Create or promote the admin from `ADMIN_USERNAME` / `ADMIN_PASSWORD` |
+| `npm run seed:demo` | Create the shared demo customer from `DEMO_USERNAME`, for `POST /auth/demo` |
 
 Tests run from the TypeScript sources through `tsx`, so `npm test` never touches `dist/` and a
 running `npm run watch` survives it.
