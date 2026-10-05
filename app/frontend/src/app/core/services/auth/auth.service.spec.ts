@@ -320,6 +320,11 @@ describe('AuthService', () => {
       httpMock.expectOne(`${API}/logout`).flush({ status: 200, message: 'ok', data: null });
     };
 
+    const failDemo = (): void => {
+      service.loginAsDemo().subscribe({ error: () => {} });
+      httpMock.expectOne(`${API}/demo`).flush(null, { status: 503, statusText: 'Service Unavailable' });
+    };
+
     it('should POST an empty body to /auth/demo and start a session', () => {
       service.loginAsDemo().subscribe((res) => {
         expect(res.user.username).toBe('testuser');
@@ -385,6 +390,30 @@ describe('AuthService', () => {
 
       service.login('u', 'p').subscribe();
       httpMock.expectOne(`${API}/login`).flush({ status: 200, message: 'ok', data: mockSession });
+
+      expect(service.canEnterAsDemo()).toBeTrue();
+    });
+
+    it('should close once the demo fails, so the guards do not try it twice', () => {
+      failDemo();
+      expect(service.canEnterAsDemo()).toBeFalse();
+    });
+
+    it('should open again on the next page load after a failure, reload included', () => {
+      failDemo();
+
+      // Unlike a sign-out, a failure is not carried over: a reload is the visitor asking again
+      asNavigation('reload');
+      const reloaded = new AuthService(TestBed.inject(AuthApiService));
+
+      expect(reloaded.canEnterAsDemo()).toBeTrue();
+    });
+
+    it('should open again once the guest button gets the demo in after a failure', () => {
+      failDemo();
+
+      service.loginAsDemo().subscribe();
+      httpMock.expectOne(`${API}/demo`).flush({ status: 200, message: 'ok', data: mockSession });
 
       expect(service.canEnterAsDemo()).toBeTrue();
     });

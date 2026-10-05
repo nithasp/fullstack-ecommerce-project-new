@@ -1,0 +1,41 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// The loader in index.html, on screen from the first paint until the app shows its first page. Its
+// rules all match the page as served, so production builds inline them as critical CSS.
+.app-boot {
+  display: none;
+  position: fixed;
+  inset: 0;
+
+  // app-loading-spinner's large ring
+  &__ring {
+    width: 56px;
+    height: 56px;
+    border: 4px solid $color-border;
+    border-top-color: $color-primary;
+    border-radius: 50%;
+    animation: appBootSpin 0.7s linear infinite;
+  }
+
+  &__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+// AppComponent renders nothing until its first page is ready, so the loader goes in the same frame
+// the navbar and the page arrive in. Removing it from script instead would leave that to timing.
+app-root:empty ~ .app-boot {
+  @include flex-center;
+}
+
+@keyframes appBootSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

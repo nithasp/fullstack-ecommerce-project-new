@@ -37,6 +37,13 @@ export class AuthService {
    */
   private accessToken: string | null = null;
 
+  /**
+   * Kept for this page only: after a failed demo entry the guards stop asking for one, so the way
+   * to the login page does not wait on a second attempt. A reload, or the login page's guest
+   * button, tries again.
+   */
+  private demoUnavailable = false;
+
   private loggedInSubject = new BehaviorSubject<boolean>(false);
   isLoggedIn$ = this.loggedInSubject.asObservable();
 
@@ -52,9 +59,12 @@ export class AuthService {
     if (!isTabRefresh()) this.setDemoDeclined(false);
   }
 
-  /** False once someone signs out, so the demo does not pull them straight back in. */
+  /**
+   * False once someone signs out, so the demo does not pull them straight back in, and once it has
+   * failed on this page.
+   */
   canEnterAsDemo(): boolean {
-    return environment.autoDemoLogin && !this.demoDeclined();
+    return environment.autoDemoLogin && !this.demoUnavailable && !this.demoDeclined();
   }
 
   private demoDeclined(): boolean {
@@ -154,7 +164,17 @@ export class AuthService {
   }
 
   loginAsDemo(): Observable<AuthSession> {
-    return this.authApi.demo().pipe(tap((session) => this.storeSession(session)));
+    return this.authApi.demo().pipe(
+      tap({
+        next: (session) => {
+          this.demoUnavailable = false;
+          this.storeSession(session);
+        },
+        error: () => {
+          this.demoUnavailable = true;
+        },
+      }),
+    );
   }
 
   refreshAccessToken(): Observable<AuthSession> {

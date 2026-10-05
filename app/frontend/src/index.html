@@ -13,5 +13,10 @@
   </head>
   <body>
     <app-root></app-root>
+    <!-- Beside app-root rather than in it: Angular empties app-root as it boots -->
+    <div class="app-boot" role="status">
+      <div class="app-boot__ring"></div>
+      <span class="app-boot__label">Loading the store...</span>
+    </div>
   </body>
 </html>

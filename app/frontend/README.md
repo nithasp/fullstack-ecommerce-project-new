@@ -92,7 +92,14 @@ the app-agnostic pieces, and reach app state through `core` services like everyt
   carry on to the route that was asked for. Signing out writes a flag to `sessionStorage`, which the
   guards read, so the forms stay put. A browser hands a reopened tab its `sessionStorage` back, so
   `AuthService` clears that flag unless the Navigation Timing entry says the document was reloaded —
-  which is what tells a refresh apart from a tab someone just opened
+  which is what tells a refresh apart from a tab someone just opened. A failed entry is not retried
+  by the guards until the page loads again, so falling back to the login page costs one request, not
+  two; **Browse as a guest** tries again on demand
+- **First load**: `index.html` carries a loader beside `<app-root>`, shown by CSS while `app-root` is
+  `:empty`. `AppComponent` renders nothing until auth has initialized and the first navigation has
+  settled (a guard redirect or a superseding navigation does not count), so the loader covers the
+  demo sign-in and leaves in the same frame the navbar and page arrive in — the navbar never shows
+  its signed-out links on the way in. Production builds inline the loader's rules as critical CSS
 - **Cart state**: `CartService` fetches/resets on auth state change. Quantity edits are debounced
   **per row** (`groupBy` → `debounceTime` → `switchMap`), so editing two rows inside one window syncs
   both; a rejected edit rolls that row back to the quantity the server last confirmed
