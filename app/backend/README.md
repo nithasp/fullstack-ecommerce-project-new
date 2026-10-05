@@ -323,8 +323,12 @@ Guest entry is on by default, but `POST /auth/demo` answers `404` until the acco
 after them, because the script needs the `users` table:
 
 ```json
-"preDeployCommand": ["npm run migrate:prod", "node dist/scripts/seedDemo.js"]
+"preDeployCommand": ["npm run release"]
 ```
+
+Railway accepts only one pre-deploy entry, so the two steps are composed in the `release` script
+rather than listed here; npm runs a script body through a shell, so the `&&` holds whatever
+Railway does with the string.
 
 The seed is idempotent, so running it on every deploy costs a query and changes nothing once the
 account exists. It is the compiled `dist/` script and not `npm run seed:demo`, because the runtime
@@ -359,6 +363,7 @@ demo, set `DEMO_LOGIN_ENABLED=false`; the account is then seeded but unreachable
 | `npm run migrate:prod` | Migrations on the production database |
 | `npm run seed:admin` | Create or promote the admin from `ADMIN_USERNAME` / `ADMIN_PASSWORD` |
 | `npm run seed:demo` | Create the shared demo customer from `DEMO_USERNAME`, for `POST /auth/demo` |
+| `npm run release` | The deploy's release step: migrations, then the demo seed. Runs from `dist/`, so it needs a build |
 
 Tests run from the TypeScript sources through `tsx`, so `npm test` never touches `dist/` and a
 running `npm run watch` survives it.
