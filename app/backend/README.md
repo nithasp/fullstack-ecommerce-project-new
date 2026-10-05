@@ -61,10 +61,13 @@ database above, set `POSTGRES_USER=storefront_user` and `POSTGRES_PASSWORD=store
 | `ALLOWED_ORIGIN` | – | Comma-separated browser origins allowed to call the API. Default `http://localhost:4200`, the Angular dev server |
 | `TRUST_PROXY` | – | Number of proxies in front of the app. Default 1, right for Railway and similar. Decides which IP the rate limiter and the audit log see; set `0` when clients connect directly, or they can pick their own IP with `X-Forwarded-For` |
 | `LOG_LEVEL` | – | `info` by default, `silent` under `ENV=test` |
-| `API_RATE_LIMIT` / `AUTH_RATE_LIMIT` | – | Requests per IP per 15 minutes (500 / 20). The auth limit covers register, login and refresh. Neither applies under `ENV=test` |
+| `API_RATE_LIMIT` / `AUTH_RATE_LIMIT` | – | Requests per IP per 15 minutes (500 / 20). The auth limit covers register, login, demo and refresh. Neither applies under `ENV=test` |
 | `JSON_BODY_LIMIT` | – | Default `1mb`; a larger body answers 413 |
 | `AUDIT_LOG_RETENTION_DAYS` / `PAGE_VIEW_RETENTION_DAYS` | – | Default 90 each |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_FIRST_NAME` / `ADMIN_LAST_NAME` | – | Used by `npm run seed:admin` only |
+| `DEMO_LOGIN_ENABLED` | – | Default `true`. `false` makes `POST /auth/demo` answer 404 without touching the account |
+| `DEMO_USERNAME` | – | The account `POST /auth/demo` signs in to, default `demo`. It must hold the `customer` role or the route refuses |
+| `DEMO_PASSWORD` / `DEMO_FIRST_NAME` / `DEMO_LAST_NAME` | – | Used by `npm run seed:demo` only. The password is optional: the route asks for none, and the seed makes up a throwaway one |
 
 Generate a secret or a pepper with:
 
@@ -170,7 +173,7 @@ Around them:
 | `middleware/` | Auth, rate limiting, the audit log, and the 404 and error handlers |
 | `utils/` | Response envelope, `AppError`, schema parsing, the refresh cookie |
 | `types/` | The shapes passed between layers and returned to clients |
-| `scripts/` | `seedAdmin.ts`, behind `npm run seed:admin` |
+| `scripts/` | `seedAdmin.ts` and `seedDemo.ts`, behind `npm run seed:admin` / `seed:demo` |
 | `tests/` | `api/` (HTTP through supertest), `repositories/` (SQL against the test database), `unit/` (no HTTP) |
 
 ---
@@ -315,10 +318,22 @@ A deployment needs at least `ENV=production`, `DATABASE_URL` (plus `DATABASE_SSL
 and `ALLOWED_ORIGIN` set to the frontend's origin. Change `TRUST_PROXY` if there is not exactly
 one proxy in front of the app.
 
-Guest entry is on by default, but `POST /auth/demo` answers `404` until the account exists, so
-run `npm run seed:demo` once against the deployed database (`DATABASE_URL` in the environment) the
-way you run `seed:admin`. On a deployment that is not a public demo, set `DEMO_LOGIN_ENABLED=false`
-instead.
+Guest entry is on by default, but `POST /auth/demo` answers `404` until the account exists.
+[`railway.json`](railway.json) therefore seeds it in the same release step as the migrations,
+after them, because the script needs the `users` table:
+
+```json
+"preDeployCommand": ["npm run migrate:prod", "node dist/scripts/seedDemo.js"]
+```
+
+The seed is idempotent, so running it on every deploy costs a query and changes nothing once the
+account exists. It is the compiled `dist/` script and not `npm run seed:demo`, because the runtime
+image carries no TypeScript and no dev dependencies — `tsx` is not there. To run it by hand
+instead, `railway ssh node dist/scripts/seedDemo.js`.
+
+`seed:admin` deliberately stays manual: it throws when `ADMIN_USERNAME` and `ADMIN_PASSWORD` are
+unset, which in a release step would block every deploy. On a deployment that is not a public
+demo, set `DEMO_LOGIN_ENABLED=false`; the account is then seeded but unreachable.
 
 ## Ports
 
